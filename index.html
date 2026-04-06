@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>遊戲合輯</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #ffd700;
+      --gold-dim: #b8922a;
+      --gold-dark: #6b570a;
+      --bg: #080810;
+      --surface: #10101c;
+      --surface-2: #18182a;
+      --text: #d4c5a9;
+      --text-dim: #7a6a5a;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', 'Microsoft JhengHei', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Background ── */
+    .bg-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255,215,0,0.04) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 40% at 20% 80%, rgba(30,30,80,0.4) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(80,20,20,0.2) 0%, transparent 60%);
+    }
+
+    /* Star particles */
+    .stars {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .star {
+      position: absolute;
+      background: white;
+      border-radius: 50%;
+      animation: twinkle var(--dur, 3s) ease-in-out infinite;
+      opacity: 0;
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0; transform: scale(0.5); }
+      50% { opacity: var(--max-opacity, 0.6); transform: scale(1); }
+    }
+
+    /* ── Header ── */
+    .lobby-header {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 72px 24px 48px;
+    }
+
+    .lobby-label {
+      font-size: 12px;
+      letter-spacing: 4px;
+      color: var(--gold-dim);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      opacity: 0.8;
+    }
+
+    .lobby-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(40px, 8vw, 80px);
+      font-weight: 900;
+      color: var(--gold);
+      letter-spacing: 6px;
+      line-height: 1;
+      text-shadow:
+        0 0 20px rgba(255,215,0,0.3),
+        0 0 60px rgba(255,215,0,0.1);
+      animation: titleGlow 4s ease-in-out infinite;
+    }
+
+    @keyframes titleGlow {
+      0%, 100% { text-shadow: 0 0 20px rgba(255,215,0,0.3), 0 0 60px rgba(255,215,0,0.1); }
+      50% { text-shadow: 0 0 30px rgba(255,215,0,0.5), 0 0 80px rgba(255,215,0,0.2), 0 0 120px rgba(255,215,0,0.1); }
+    }
+
+    .lobby-subtitle {
+      font-size: 14px;
+      color: var(--text-dim);
+      letter-spacing: 3px;
+      margin-top: 12px;
+    }
+
+    .divider {
+      width: 120px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+      margin: 24px auto 0;
+    }
+
+    /* ── Game Grid ── */
+    .game-grid {
+      position: relative;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+    }
+
+    /* ── Game Card ── */
+    .game-card {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid rgba(255,215,0,0.15);
+      border-radius: 20px;
+      padding: 36px 28px;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+      overflow: hidden;
+    }
+
+    .game-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(255,215,0,0.04) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .game-card.active:hover {
+      transform: translateY(-8px) scale(1.02);
+      border-color: rgba(255,215,0,0.5);
+      box-shadow:
+        0 20px 60px rgba(0,0,0,0.5),
+        0 0 40px rgba(255,215,0,0.1),
+        inset 0 1px 0 rgba(255,215,0,0.1);
+    }
+
+    .game-card.active:hover::before { opacity: 1; }
+
+    .game-card.coming-soon {
+      opacity: 0.4;
+      cursor: not-allowed;
+      border-style: dashed;
+    }
+
+    .card-badge {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    .badge-active {
+      background: rgba(255,215,0,0.15);
+      color: var(--gold);
+      border: 1px solid rgba(255,215,0,0.3);
+    }
+
+    .badge-soon {
+      background: rgba(255,255,255,0.05);
+      color: var(--text-dim);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .card-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      display: block;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+    }
+
+    .card-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+
+    .card-desc {
+      font-size: 13px;
+      color: var(--text-dim);
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .card-games-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .game-tag {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.05);
+      color: var(--text-dim);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .game-tag.available {
+      background: rgba(255,215,0,0.08);
+      color: var(--gold-dim);
+      border-color: rgba(255,215,0,0.2);
+    }
+
+    .card-enter-hint {
+      position: absolute;
+      bottom: 20px;
+      right: 24px;
+      font-size: 13px;
+      color: var(--gold-dim);
+      opacity: 0;
+      transform: translateX(-8px);
+      transition: opacity 0.3s, transform 0.3s;
+    }
+
+    .game-card.active:hover .card-enter-hint {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    /* ── Footer ── */
+    .lobby-footer {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 24px;
+      font-size: 11px;
+      color: var(--text-dim);
+      letter-spacing: 1px;
+    }
+
+    /* ── Card suits decoration ── */
+    .suit-decor {
+      position: fixed;
+      font-size: 200px;
+      opacity: 0.015;
+      pointer-events: none;
+      z-index: 0;
+      user-select: none;
+    }
+
+    .suit-decor-1 { top: -40px; left: -40px; }
+    .suit-decor-2 { bottom: -40px; right: -40px; }
+  </style>
+</head>
+<body>
+
+  <div class="bg-layer"></div>
+  <div class="stars" id="stars"></div>
+
+  <span class="suit-decor suit-decor-1">♠</span>
+  <span class="suit-decor suit-decor-2">♦</span>
+
+  <header class="lobby-header">
+    <div class="lobby-label">✦ Welcome to ✦</div>
+    <h1 class="lobby-title">遊戲合輯</h1>
+    <p class="lobby-subtitle">GAME COLLECTION</p>
+    <div class="divider"></div>
+  </header>
+
+  <div class="game-grid">
+
+    <!-- Martin's Casino -->
+    <a href="martins-casino/" class="game-card active">
+      <span class="card-badge badge-active">開放中</span>
+      <span class="card-icon">🎰</span>
+      <div class="card-name">Martin's Casino</div>
+      <div class="card-desc">豪華賭場體驗，試試你的運氣</div>
+      <div class="card-games-list">
+        <span class="game-tag available">射龍門</span>
+        <span class="game-tag available">21 點</span>
+        <span class="game-tag available">百家樂</span>
+        <span class="game-tag available">老虎機</span>
+      </div>
+      <span class="card-enter-hint">進入 →</span>
+    </a>
+
+    <!-- Placeholder 2 -->
+    <div class="game-card coming-soon">
+      <span class="card-badge badge-soon">即將推出</span>
+      <span class="card-icon">🎲</span>
+      <div class="card-name">骰子世界</div>
+      <div class="card-desc">各種骰子遊戲合輯</div>
+      <div class="card-games-list">
+        <span class="game-tag">大小 (即將)</span>
+        <span class="game-tag">比大小 (即將)</span>
+      </div>
+    </div>
+
+    <!-- Placeholder 3 -->
+    <div class="game-card coming-soon">
+      <span class="card-badge badge-soon">即將推出</span>
+      <span class="card-icon">🃏</span>
+      <div class="card-name">牌局天地</div>
+      <div class="card-desc">策略與運氣的完美結合</div>
+      <div class="card-games-list">
+        <span class="game-tag">升級 (即將)</span>
+        <span class="game-tag">鬥地主 (即將)</span>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="lobby-footer">
+    ♠ ♥ ♦ ♣ &nbsp;&nbsp; Game Collection &nbsp;&nbsp; ♣ ♦ ♥ ♠
+  </footer>
+
+  <script>
+    // Generate star particles
+    const starsEl = document.getElementById('stars');
+    for (let i = 0; i < 80; i++) {
+      const star = document.createElement('div');
+      star.className = 'star';
+      const size = Math.random() * 2 + 0.5;
+      star.style.cssText = `
+        width: ${size}px;
+        height: ${size}px;
+        left: ${Math.random() * 100}%;
+        top: ${Math.random() * 100}%;
+        --dur: ${2 + Math.random() * 4}s;
+        --max-opacity: ${0.2 + Math.random() * 0.5};
+        animation-delay: ${Math.random() * 4}s;
+      `;
+      starsEl.appendChild(star);
+    }
+  </script>
+</body>
+</html>

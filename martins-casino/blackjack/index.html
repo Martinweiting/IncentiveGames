@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Martin's Casino — 21點</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --gold:#ffd700;--gold-dim:#b8922a;--gold-dark:#6b570a;
+      --bg:#080810;--surface:#10101c;--surface-2:#18182a;
+      --felt:#1b3d20;--felt-light:#224d28;--felt-dark:#122615;
+      --red:#e53935;--red-dark:#b71c1c;--gw:#43a047;
+      --white:#f8f5f0;--text:#d4c5a9;--text-dim:#8a7a6a;--text-muted:#4a3a2a;
+    }
+    body{background:var(--bg);background-image:radial-gradient(ellipse at top,#14142a 0%,var(--bg) 70%);color:var(--text);font-family:'Inter','Microsoft JhengHei',sans-serif;min-height:100vh;overflow-x:hidden}
+
+    /* HEADER */
+    .hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;background:rgba(8,8,16,.92);border-bottom:1px solid rgba(255,215,0,.15);position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);gap:12px}
+    .back-btn{color:var(--gold-dim);text-decoration:none;font-size:13px;font-weight:500;transition:color .2s;white-space:nowrap}
+    .back-btn:hover{color:var(--gold)}
+    .gnav{display:flex;gap:4px;background:rgba(0,0,0,.35);border-radius:30px;padding:4px}
+    .gnav a{padding:6px 14px;border-radius:24px;font-size:13px;font-weight:600;color:var(--text-dim);text-decoration:none;transition:all .2s;white-space:nowrap}
+    .gnav a.active{background:rgba(255,215,0,.15);color:var(--gold)}
+    .gnav a:hover:not(.active){color:var(--text);background:rgba(255,255,255,.06)}
+    .bal-block{display:flex;flex-direction:column;align-items:flex-end;min-width:80px}
+    .bal-lbl{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1.5px}
+    .bal-amt{font-size:clamp(16px,3vw,22px);font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums}
+    .bal-amt.fu{animation:fu .5s ease-out}
+    .bal-amt.fd{animation:fd .5s ease-out}
+    @keyframes fu{0%{color:var(--gw);transform:scale(1.15)}100%{color:var(--gold);transform:scale(1)}}
+    @keyframes fd{0%{color:var(--red);transform:scale(1.1)}100%{color:var(--gold);transform:scale(1)}}
+
+    /* LAYOUT */
+    .wrap{max-width:780px;margin:0 auto;padding:24px 16px 60px}
+    .gtitle{text-align:center;margin-bottom:18px}
+    .gtitle h1{font-family:'Playfair Display',serif;font-size:clamp(28px,6vw,52px);font-weight:900;color:var(--gold);letter-spacing:8px;text-shadow:0 0 30px rgba(255,215,0,.4);animation:glow 5s ease-in-out infinite}
+    .gtitle p{font-size:11px;color:var(--text-dim);letter-spacing:4px;margin-top:4px}
+    @keyframes glow{0%,100%{text-shadow:0 0 30px rgba(255,215,0,.4)}50%{text-shadow:0 0 50px rgba(255,215,0,.65)}}
+
+    /* TABLE */
+    .table{position:relative;background:radial-gradient(ellipse at 50% 40%,var(--felt-light) 0%,var(--felt) 55%,var(--felt-dark) 100%);border:2px solid var(--gold-dim);border-radius:24px;padding:28px 20px 24px;box-shadow:0 0 60px rgba(0,0,0,.6),0 0 30px rgba(201,168,76,.08),inset 0 0 80px rgba(0,0,0,.3);overflow:hidden}
+    .table::before{content:'';position:absolute;inset:0;border-radius:24px;background:repeating-linear-gradient(45deg,transparent,transparent 22px,rgba(0,0,0,.025) 22px,rgba(0,0,0,.025) 44px),repeating-linear-gradient(-45deg,transparent,transparent 22px,rgba(0,0,0,.025) 22px,rgba(0,0,0,.025) 44px);pointer-events:none}
+    .table.aw{animation:tw 1.2s ease-in-out}
+    .table.al{animation:tl .55s ease-in-out}
+    @keyframes tw{0%,100%{box-shadow:0 0 60px rgba(0,0,0,.6),inset 0 0 80px rgba(0,0,0,.3)}45%{box-shadow:0 0 80px rgba(255,215,0,.35),0 0 140px rgba(255,215,0,.15),inset 0 0 80px rgba(0,0,0,.2)}}
+    @keyframes tl{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+
+    /* HANDS */
+    .hand-section{margin-bottom:16px}
+    .hand-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:0 4px}
+    .hand-label{font-size:13px;color:var(--text-dim);letter-spacing:1.5px;text-transform:uppercase}
+    .score-badge{background:rgba(0,0,0,.4);border:1px solid rgba(255,215,0,.2);border-radius:20px;padding:3px 12px;font-size:14px;font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums;transition:all .3s}
+    .score-badge.bust{border-color:var(--red);color:var(--red)}
+    .score-badge.bj{border-color:var(--gold);color:var(--gold);box-shadow:0 0 12px rgba(255,215,0,.3)}
+
+    .hand-cards{display:flex;justify-content:center;min-height:134px;align-items:center;flex-wrap:nowrap;position:relative}
+    .hand-cards .card-slot+.card-slot{margin-left:-30px}
+
+    .vs-divider{text-align:center;color:rgba(255,215,0,.2);font-size:11px;letter-spacing:3px;margin:6px 0;text-transform:uppercase}
+
+    /* CARD */
+    .card-slot{width:88px;height:128px;perspective:700px;flex-shrink:0}
+    .card-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .65s cubic-bezier(.4,.2,.2,1)}
+    .card-inner.flipped{transform:rotateY(180deg)}
+    .card-face,.card-back{position:absolute;inset:0;border-radius:10px;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+    .card-back{background:linear-gradient(145deg,#1a237e 0%,#283593 50%,#1a237e 100%);border:2px solid rgba(255,255,255,.12);box-shadow:0 6px 24px rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center}
+    .back-inner{width:76%;height:78%;border:1.5px solid rgba(255,215,0,.25);border-radius:6px;display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(45deg,rgba(255,215,0,.04) 0px,rgba(255,215,0,.04) 3px,transparent 3px,transparent 9px)}
+    .back-logo{font-family:'Playfair Display',serif;font-size:16px;font-weight:900;color:rgba(255,215,0,.5)}
+    .card-face{background:var(--white);border:1.5px solid rgba(180,180,180,.3);box-shadow:0 6px 24px rgba(0,0,0,.6);transform:rotateY(180deg);display:grid;grid-template-rows:1fr auto 1fr;padding:7px 8px;overflow:hidden}
+    .card-face.red{color:#c62828}
+    .card-face.black{color:#1a1a1a}
+    .corner-top{display:flex;flex-direction:column;align-items:flex-start;line-height:1.1}
+    .corner-bot{display:flex;flex-direction:column;align-items:flex-end;transform:rotate(180deg);line-height:1.1}
+    .cv{font-size:16px;font-weight:800}
+    .csm{font-size:11px}
+    .card-center{display:flex;align-items:center;justify-content:center}
+    .clg{font-size:36px;line-height:1}
+    @keyframes cardDrop{from{opacity:0;transform:translateY(-50px) scale(.85)}to{opacity:1;transform:translateY(0) scale(1)}}
+    .card-slot.entering{animation:cardDrop .35s cubic-bezier(.2,.8,.4,1)}
+
+    /* RESULT BANNER */
+    .result-banner{position:absolute;top:44%;left:50%;transform:translate(-50%,-50%) scale(.7);background:rgba(6,6,14,.96);border:2px solid var(--gold-dim);border-radius:18px;padding:20px 40px;text-align:center;z-index:20;pointer-events:none;opacity:0;transition:opacity .2s,transform .3s cubic-bezier(.34,1.56,.64,1);backdrop-filter:blur(8px);white-space:nowrap}
+    .result-banner.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+    .result-banner.tw{border-color:var(--gold);box-shadow:0 0 50px rgba(255,215,0,.25)}
+    .result-banner.tl{border-color:var(--red);box-shadow:0 0 50px rgba(229,57,53,.2)}
+    .result-banner.tp{border-color:#555}
+    .rm{font-family:'Playfair Display',serif;font-size:26px;font-weight:900;margin-bottom:5px}
+    .rm.win{color:var(--gold)}.rm.lose{color:var(--red)}.rm.push{color:var(--text-dim)}
+    .rs{font-size:17px;font-weight:700}
+    .rs.pos{color:var(--gw)}.rs.neg{color:var(--red)}.rs.neu{color:var(--text-dim)}
+
+    /* ACTIONS */
+    .action-btns{display:flex;gap:10px;justify-content:center;margin:14px 0 10px;flex-wrap:wrap}
+    .abt{padding:11px 22px;border-radius:50px;font-size:14px;font-weight:700;border:2px solid;cursor:pointer;transition:transform .15s,box-shadow .15s,opacity .2s;letter-spacing:.5px;font-family:'Inter',sans-serif}
+    .abt:hover:not(:disabled){transform:translateY(-2px)}
+    .abt:disabled{opacity:.35;cursor:not-allowed;transform:none!important}
+    .abt-hit{background:linear-gradient(145deg,#1565c0,#0d47a1);color:#90caf9;border-color:#42a5f5;box-shadow:0 4px 16px rgba(66,165,245,.25)}
+    .abt-hit:hover:not(:disabled){box-shadow:0 6px 22px rgba(66,165,245,.4)}
+    .abt-stand{background:linear-gradient(145deg,#b8922a,#8B6914);color:#fff8e0;border-color:var(--gold-dim);box-shadow:0 4px 16px rgba(184,146,42,.25)}
+    .abt-stand:hover:not(:disabled){box-shadow:0 6px 22px rgba(255,215,0,.4)}
+    .abt-double{background:linear-gradient(145deg,#6a1b9a,#4a148c);color:#e1bee7;border-color:#ab47bc;box-shadow:0 4px 16px rgba(171,71,188,.25)}
+    .abt-double:hover:not(:disabled){box-shadow:0 6px 22px rgba(171,71,188,.4)}
+
+    /* STATUS */
+    .status-msg{text-align:center;font-size:13px;color:var(--text-dim);min-height:22px;letter-spacing:.3px;margin:6px 0 12px}
+
+    /* BET */
+    .bet-section{background:rgba(0,0,0,.25);border-radius:16px;padding:16px 14px}
+    .chips-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:12px}
+    .chip{position:relative;width:52px;height:52px;border-radius:50%;border:3px solid;font-weight:800;font-size:12px;cursor:pointer;transition:transform .15s,box-shadow .15s;user-select:none;display:flex;align-items:center;justify-content:center}
+    .chip::after{content:'';position:absolute;inset:4px;border-radius:50%;border:1.5px dashed rgba(255,255,255,.25);pointer-events:none}
+    .chip:hover:not(:disabled){transform:translateY(-4px) scale(1.08)}
+    .chip:active:not(:disabled){transform:scale(.93)}
+    .chip.cr{background:#c62828;border-color:#ef5350;color:#fff;box-shadow:0 4px 14px rgba(229,57,53,.35)}
+    .chip.cb{background:#1565c0;border-color:#42a5f5;color:#fff;box-shadow:0 4px 14px rgba(66,165,245,.3)}
+    .chip.cg{background:#2e7d32;border-color:#66bb6a;color:#fff;box-shadow:0 4px 14px rgba(102,187,106,.3)}
+    .chip.ck{background:#212121;border-color:#757575;color:var(--gold);box-shadow:0 4px 14px rgba(0,0,0,.5)}
+    .chip.cp{background:#6a1b9a;border-color:#ab47bc;color:#fff;box-shadow:0 4px 14px rgba(171,71,188,.3)}
+    .chip.co{background:#c79400;border-color:var(--gold);color:#1a1a00;box-shadow:0 4px 14px rgba(255,215,0,.35)}
+    .chip:disabled{opacity:.35;cursor:not-allowed;transform:none!important}
+    .bet-row{display:flex;align-items:center;gap:8px;justify-content:center;flex-wrap:wrap}
+    .bet-lbl{font-size:12px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1.5px;white-space:nowrap}
+    .bet-inp{background:rgba(0,0,0,.45);border:1.5px solid rgba(255,215,0,.25);border-radius:10px;color:var(--gold);font-size:17px;font-weight:700;padding:7px 12px;width:105px;text-align:center;font-family:'Inter',monospace;font-variant-numeric:tabular-nums;outline:none;transition:border-color .2s}
+    .bet-inp:focus{border-color:var(--gold)}
+    .bet-inp::-webkit-inner-spin-button,.bet-inp::-webkit-outer-spin-button{-webkit-appearance:none}
+    .bet-inp[type=number]{-moz-appearance:textfield}
+    .bsm{padding:7px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:var(--text-dim);font-size:12px;cursor:pointer;transition:all .2s;white-space:nowrap}
+    .bsm:hover{background:rgba(255,255,255,.1);color:var(--text)}
+    .bsm:disabled{opacity:.4;cursor:not-allowed}
+
+    /* DEAL BTN */
+    .deal-row{display:flex;justify-content:center;margin-top:16px}
+    .btn-deal{padding:13px 40px;border-radius:50px;font-size:15px;font-weight:700;background:linear-gradient(145deg,#2d5a30,#1b3a20);color:#90ee90;border:2px solid rgba(100,200,100,.25);box-shadow:0 4px 20px rgba(0,60,0,.4);cursor:pointer;transition:transform .2s,box-shadow .2s;letter-spacing:1px;font-family:'Inter',sans-serif}
+    .btn-deal:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,80,0,.5)}
+    .btn-deal:disabled{opacity:.4;cursor:not-allowed;transform:none!important}
+
+    /* STATS */
+    .stats-row{display:flex;justify-content:center;gap:24px;padding:14px 0 0;border-top:1px solid rgba(255,215,0,.08);margin-top:16px}
+    .stat{text-align:center}
+    .sn{font-size:20px;font-weight:700}
+    .sl{font-size:10px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;margin-top:2px}
+    .rules-btn{display:block;margin:10px auto 0;font-size:12px;color:var(--text-dim);background:none;border:none;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+    .rules-btn:hover{color:var(--gold-dim)}
+
+    /* MODAL */
+    .modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;pointer-events:none;transition:opacity .25s;backdrop-filter:blur(4px)}
+    .modal-ov.open{opacity:1;pointer-events:auto}
+    .modal-box{background:var(--surface-2);border:1px solid rgba(255,215,0,.2);border-radius:20px;padding:28px;max-width:460px;width:100%;max-height:80vh;overflow-y:auto;position:relative}
+    .modal-ttl{font-family:'Playfair Display',serif;font-size:20px;font-weight:900;color:var(--gold);margin-bottom:18px;text-align:center}
+    .modal-x{position:absolute;top:14px;right:18px;background:none;border:none;font-size:22px;color:var(--text-dim);cursor:pointer;line-height:1}
+    .modal-x:hover{color:var(--text)}
+    .ri{display:flex;gap:12px;margin-bottom:12px;align-items:flex-start;font-size:14px;line-height:1.6;color:var(--text)}
+    .ri strong{color:var(--gold)}
+    .rtbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:13px}
+    .rtbl th{color:var(--gold-dim);font-weight:600;text-align:left;padding:6px 10px;border-bottom:1px solid rgba(255,215,0,.15)}
+    .rtbl td{padding:7px 10px;border-bottom:1px solid rgba(255,255,255,.05);color:var(--text)}
+
+    /* HISTORY */
+    .hist-sec{margin-top:22px}
+    .hist-ttl{font-family:'Playfair Display',serif;font-size:13px;color:var(--gold-dim);letter-spacing:3px;text-transform:uppercase;text-align:center;margin-bottom:10px}
+    .hist-list{display:flex;flex-direction:column;gap:5px}
+    .hi{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:10px;padding:7px 12px;background:rgba(255,255,255,.02);border-radius:10px;border-left:3px solid;font-size:12px}
+    .hi.win{border-color:var(--gold)}.hi.lose{border-color:var(--red)}.hi.push{border-color:#555}
+    .hc{color:var(--text);font-weight:500}
+    .hr{font-weight:700;white-space:nowrap}
+    .hr.win{color:var(--gold)}.hr.lose{color:var(--red)}.hr.push{color:var(--text-dim)}
+    .hb{color:var(--text-dim);font-size:11px;white-space:nowrap;font-variant-numeric:tabular-nums}
+    .no-hist{text-align:center;color:var(--text-muted);font-size:13px;padding:20px}
+
+    @media(max-width:500px){.hdr{padding:10px 14px}.table{padding:18px 10px 18px}.chip{width:44px;height:44px;font-size:10px}.abt{padding:10px 16px;font-size:13px}.hand-cards .card-slot+.card-slot{margin-left:-36px}.result-banner{padding:14px 24px;white-space:normal;width:88%}.rm{font-size:20px}}
+  </style>
+</head>
+<body>
+
+<!-- MODAL -->
+<div class="modal-ov" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="modal-ttl">21點 遊戲規則</div>
+    <button class="modal-x" onclick="closeModal()">✕</button>
+    <div class="ri"><span style="font-size:20px;flex-shrink:0">🃏</span><div>目標是讓手牌點數<strong>盡量接近 21</strong>，但不能超過 21（爆牌）。點數比荷官高者獲勝。</div></div>
+    <div class="ri"><span style="font-size:20px;flex-shrink:0">♠</span><div><strong>牌面點數</strong>：A = 1 或 11（自動取最優值），J/Q/K = 10，其餘按面值計算。</div></div>
+    <div class="ri"><span style="font-size:20px;flex-shrink:0">🎯</span><div><strong>Blackjack（天生 21）</strong>：開局兩張牌即為 21（A + 10點牌），賠率 1.5 倍！</div></div>
+    <div class="ri"><span style="font-size:20px;flex-shrink:0">💰</span><div><strong>加倍（Double Down）</strong>：前兩張牌時可加倍下注，但只能再要一張牌。</div></div>
+    <div class="ri"><span style="font-size:20px;flex-shrink:0">🎩</span><div>荷官<strong>必須在 17 點以上停牌</strong>。荷官爆牌則玩家獲勝。</div></div>
+    <table class="rtbl">
+      <thead><tr><th>情況</th><th>賠率</th></tr></thead>
+      <tbody>
+        <tr><td>Blackjack 天生21</td><td style="color:var(--gold)">1.5倍</td></tr>
+        <tr><td>一般獲勝</td><td style="color:var(--gold)">1倍</td></tr>
+        <tr><td>平局</td><td style="color:var(--text-dim)">退回下注</td></tr>
+        <tr><td>爆牌 / 輸牌</td><td style="color:var(--red)">失去下注</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header class="hdr">
+  <a href="../" class="back-btn">← 大廳</a>
+  <nav class="gnav">
+    <a href="../dragon-gate/">射龍門</a>
+    <a href="./" class="active">21 點</a>
+    <a href="../baccarat/">百家樂</a>
+  </nav>
+  <div class="bal-block">
+    <span class="bal-lbl">籌碼</span>
+    <span class="bal-amt" id="bal">$1,000</span>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="gtitle">
+    <h1>２１　點</h1>
+    <p>BLACKJACK</p>
+  </div>
+
+  <div class="table" id="table">
+    <div class="result-banner" id="rbanner">
+      <div class="rm" id="rtxt"></div>
+      <div class="rs" id="ramt"></div>
+    </div>
+
+    <!-- DEALER -->
+    <div class="hand-section">
+      <div class="hand-header">
+        <span class="hand-label">🎩 荷官</span>
+        <span class="score-badge" id="dscore">—</span>
+      </div>
+      <div class="hand-cards" id="dcards"></div>
+    </div>
+
+    <div class="vs-divider">─── VS ───</div>
+
+    <!-- PLAYER -->
+    <div class="hand-section">
+      <div class="hand-header">
+        <span class="hand-label">👤 玩家</span>
+        <span class="score-badge" id="pscore">—</span>
+      </div>
+      <div class="hand-cards" id="pcards"></div>
+    </div>
+
+    <!-- ACTION BUTTONS -->
+    <div class="action-btns">
+      <button class="abt abt-hit"    id="btn-hit"    onclick="hit()"    disabled>要牌 HIT</button>
+      <button class="abt abt-stand"  id="btn-stand"  onclick="stand()"  disabled>停牌 STAND</button>
+      <button class="abt abt-double" id="btn-double" onclick="dbl()"    disabled>加倍 DOUBLE</button>
+    </div>
+
+    <div class="status-msg" id="smsg">請下注後按「發牌」開始</div>
+
+    <!-- BETTING -->
+    <div class="bet-section">
+      <div class="chips-row" id="chips">
+        <button class="chip cr" onclick="addBet(10)"   disabled>10</button>
+        <button class="chip cb" onclick="addBet(50)"   disabled>50</button>
+        <button class="chip cg" onclick="addBet(100)"  disabled>100</button>
+        <button class="chip ck" onclick="addBet(500)"  disabled>500</button>
+        <button class="chip cp" onclick="addBet(1000)" disabled>1K</button>
+        <button class="chip co" onclick="allIn()"      disabled>ALL IN</button>
+      </div>
+      <div class="bet-row">
+        <span class="bet-lbl">下注</span>
+        <input type="number" class="bet-inp" id="betinp" value="0" min="0" disabled>
+        <button class="bsm" id="bclr" onclick="clearBet()" disabled>清除</button>
+        <button class="bsm" id="bmax" onclick="allIn()"    disabled>最大</button>
+      </div>
+    </div>
+
+    <div class="deal-row">
+      <button class="btn-deal" id="btn-deal" onclick="dealHand()">🃏 發　牌</button>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row">
+      <div class="stat"><div class="sn" id="sw" style="color:var(--gold)">0</div><div class="sl">勝</div></div>
+      <div class="stat"><div class="sn" id="sl" style="color:var(--red)">0</div><div class="sl">敗</div></div>
+      <div class="stat"><div class="sn" id="sp" style="color:var(--text-dim)">0</div><div class="sl">平</div></div>
+      <div class="stat"><div class="sn" id="sbj" style="color:var(--gold)">0</div><div class="sl">BJ</div></div>
+      <div class="stat"><div class="sn" id="sr">0</div><div class="sl">局數</div></div>
+    </div>
+    <button class="rules-btn" onclick="openModal()">？ 查看遊戲規則</button>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="hist-sec">
+    <div class="hist-ttl">遊戲紀錄</div>
+    <div class="hist-list" id="hlist"><div class="no-hist">尚無紀錄</div></div>
+  </div>
+</main>
+
+<script src="../sounds.js"></script>
+<script>
+/* ── Safe sound wrapper (never throws) ── */
+function S(name){try{if(typeof Snd!=='undefined')Snd[name]();}catch(e){}}
+
+const $=id=>document.getElementById(id);
+
+/* ── State ── */
+let balance=(()=>{const v=+localStorage.getItem('mc_chips');return(v>0)?v:1000;})();localStorage.setItem('mc_chips',balance);
+let deck=[],ph=[],dh=[],bet=0,phase='idle',hiddenEl=null;
+let stats={w:0,l:0,p:0,bj:0,r:0},hist=[];
+
+/* ── DECK ── */
+function mkDeck(){
+  const d=[];
+  for(const s of['♠','♥','♦','♣'])for(const v of['A','2','3','4','5','6','7','8','9','10','J','Q','K'])d.push({s,v});
+  for(let i=d.length-1;i>0;i--){const j=~~(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}
+  return d;
+}
+function draw(){if(deck.length<6)deck=mkDeck();return deck.pop();}
+
+/* ── SCORE ── */
+function cv(c){if(c.v==='A')return 11;if(c.v==='J'||c.v==='Q'||c.v==='K')return 10;return parseInt(c.v);}
+function score(h){let s=0,a=0;for(const c of h){if(c.v==='A')a++;s+=cv(c);}while(s>21&&a>0){s-=10;a--;}return s;}
+function isBJ(h){return h.length===2&&score(h)===21;}
+function isBust(h){return score(h)>21;}
+
+/* ── FORMAT ── */
+function fmt(n){return(n>=0?'$':'-$')+Math.abs(n).toLocaleString('en-US');}
+function setStatus(m){$('smsg').textContent=m;}
+
+/* ── BALANCE ── */
+function updateBal(delta){
+  balance+=delta; if(balance<0)balance=0;
+  localStorage.setItem('mc_chips',balance);
+  const el=$('bal');
+  el.textContent=fmt(balance);
+  el.classList.remove('fu','fd'); void el.offsetWidth;
+  el.classList.add(delta>=0?'fu':'fd');
+}
+
+function updateStats(){
+  $('sw').textContent=stats.w;$('sl').textContent=stats.l;
+  $('sp').textContent=stats.p;$('sbj').textContent=stats.bj;$('sr').textContent=stats.r;
+}
+
+/* ── CARD ELEMENT ── */
+function mkCard(card,faceUp){
+  const red=card.s==='♥'||card.s==='♦';
+  const el=document.createElement('div');
+  el.className='card-slot';
+  el.innerHTML=`<div class="card-inner${faceUp?' flipped':''}">
+    <div class="card-back"><div class="back-inner"><span class="back-logo">MC</span></div></div>
+    <div class="card-face ${red?'red':'black'}">
+      <div class="corner-top"><span class="cv">${card.v}</span><span class="csm">${card.s}</span></div>
+      <div class="card-center"><span class="clg">${card.s}</span></div>
+      <div class="corner-bot"><span class="cv">${card.v}</span><span class="csm">${card.s}</span></div>
+    </div></div>`;
+  return el;
+}
+
+/* ── ADD CARD TO TABLE (callback-based, no async/await) ── */
+function addCard(containerId, card, faceUp, cb){
+  const el=mkCard(card,faceUp);
+  el.style.cssText='opacity:0;transform:translateY(-45px) scale(.85)';
+  $(containerId).appendChild(el);
+  S('deal');
+  // Use rAF to trigger CSS transition after append
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    el.style.cssText='opacity:1;transform:translateY(0) scale(1);transition:opacity .3s ease,transform .35s cubic-bezier(.2,.8,.4,1)';
+  }));
+  if(cb) setTimeout(cb,380);
+  return el.querySelector('.card-inner');
+}
+
+/* ── SCORES UI ── */
+function updateScores(reveal){
+  const ps=score(ph), pb=$('pscore');
+  pb.textContent=ph.length?ps:'—';
+  pb.className='score-badge'+(isBJ(ph)?' bj':ps>21?' bust':'');
+  const db=$('dscore');
+  if(!dh.length){db.textContent='—';db.className='score-badge';return;}
+  if(reveal){const ds=score(dh);db.textContent=ds;db.className='score-badge'+(ds>21?' bust':'');}
+  else{db.textContent='?';db.className='score-badge';}
+}
+
+/* ── BANNER ── */
+function showBanner(type,main,sub){
+  const b=$('rbanner');
+  b.className='result-banner t'+type;
+  $('rtxt').className='rm '+(type==='tw'?'win':type==='tl'?'lose':'push');
+  $('rtxt').textContent=main;
+  $('ramt').className='rs '+(type==='tw'?'pos':type==='tl'?'neg':'neu');
+  $('ramt').textContent=sub;
+  b.classList.add('show');
+  setTimeout(()=>b.classList.remove('show'),2600);
+}
+
+/* ── CHIPS & BTNS ── */
+function setChips(on){
+  $('chips').querySelectorAll('.chip').forEach(c=>c.disabled=!on);
+  $('betinp').disabled=!on; $('bclr').disabled=!on; $('bmax').disabled=!on;
+}
+function setActionBtns(on,canDbl=false){
+  $('btn-hit').disabled=!on; $('btn-stand').disabled=!on;
+  $('btn-double').disabled=!(on&&canDbl);
+}
+function addBet(n){if(phase!=='idle')return;S('chip');const cur=parseInt($('betinp').value)||0;$('betinp').value=Math.min(cur+n,balance);}
+function clearBet(){$('betinp').value=0;}
+function allIn(){if(phase!=='idle')return;$('betinp').value=balance;}
+
+/* ════════════════════════════════════
+   GAME FLOW (pure setTimeout callbacks)
+════════════════════════════════════ */
+
+/* ── DEAL ── */
+function dealHand(){
+  if(phase!=='idle')return;
+  bet=parseInt($('betinp').value)||0;
+  if(bet<=0){setStatus('請先選擇下注金額！');return;}
+  if(bet>balance){setStatus('下注超過現有籌碼！');return;}
+
+  phase='dealing';
+  $('btn-deal').disabled=true;
+  setChips(false); setActionBtns(false);
+  $('rbanner').classList.remove('show');
+  $('pcards').innerHTML=''; $('dcards').innerHTML='';
+  ph=[]; dh=[]; hiddenEl=null;
+  updateScores(false);
+  setStatus('發牌中...');
+
+  // Deal sequence: P1 → D1 → P2 → D2(hidden)
+  const seq=[
+    {to:'pcards',hand:ph,up:true},
+    {to:'dcards',hand:dh,up:true},
+    {to:'pcards',hand:ph,up:true},
+    {to:'dcards',hand:dh,up:false},
+  ];
+  let i=0;
+  function next(){
+    if(i>=seq.length){afterDeal();return;}
+    const step=seq[i++];
+    const card=draw(); step.hand.push(card);
+    const inner=addCard(step.to,card,step.up,next);
+    if(i===4) hiddenEl=inner;   // 4th card = dealer hidden
+    updateScores(false);
+  }
+  next();
+}
+
+function afterDeal(){
+  updateScores(false);
+  if(isBJ(ph)){
+    setStatus('Blackjack！');
+    setTimeout(()=>dealerReveal(true),500);
+    return;
+  }
+  phase='player';
+  setStatus('要牌(HIT) ／ 停牌(STAND) ／ 加倍(DOUBLE)');
+  setActionBtns(true,true);
+}
+
+/* ── HIT ── */
+function hit(){
+  if(phase!=='player')return;
+  setActionBtns(false);
+  const card=draw(); ph.push(card);
+  addCard('pcards',card,true,()=>{
+    updateScores(false);
+    if(isBust(ph)){endGame('bust');return;}
+    setActionBtns(true,false);  // no double after hit
+  });
+}
+
+/* ── STAND ── */
+function stand(){
+  if(phase!=='player')return;
+  phase='dealer'; setActionBtns(false);
+  setStatus('荷官翻牌...');
+  setTimeout(()=>dealerReveal(false),300);
+}
+
+/* ── DOUBLE DOWN ── */
+function dbl(){
+  if(phase!=='player')return;
+  const extra=Math.min(bet,balance-bet);
+  bet+=extra;
+  setActionBtns(false);
+  setStatus(`加倍下注 → ${fmt(bet)}`);
+  const card=draw(); ph.push(card);
+  addCard('pcards',card,true,()=>{
+    updateScores(false);
+    if(isBust(ph)){endGame('bust');return;}
+    phase='dealer';
+    setTimeout(()=>dealerReveal(false),400);
+  });
+}
+
+/* ── DEALER REVEAL ── */
+function dealerReveal(playerBJ){
+  if(hiddenEl){hiddenEl.classList.add('flipped');S('flip');}
+  setTimeout(()=>{
+    updateScores(true);
+    if(playerBJ){
+      endGame(isBJ(dh)?'push':'blackjack');
+    } else {
+      setTimeout(dealerDraw,400);
+    }
+  },700);
+}
+
+/* ── DEALER DRAW LOOP ── */
+function dealerDraw(){
+  updateScores(true);
+  if(score(dh)<17){
+    setStatus('荷官要牌...');
+    const card=draw(); dh.push(card);
+    addCard('dcards',card,true,()=>{
+      updateScores(true);
+      setTimeout(dealerDraw,520);
+    });
+  } else {
+    setTimeout(()=>{
+      const ps=score(ph),ds=score(dh);
+      if(isBust(dh))     endGame('dealerbust');
+      else if(ps>ds)     endGame('win');
+      else if(ds>ps)     endGame('lose');
+      else               endGame('push');
+    },350);
+  }
+}
+
+/* ── END GAME ── */
+function endGame(result){
+  phase='done';
+  let payout=0,type,main;
+  switch(result){
+    case'blackjack': payout=Math.floor(bet*1.5); type='tw'; main='🎉 Blackjack！天生21！'; S('blackjack'); stats.bj++; break;
+    case'win':       payout=bet;  type='tw'; main='🏆 玩家獲勝！';  S('win');  break;
+    case'dealerbust':payout=bet;  type='tw'; main='💥 荷官爆牌！';  S('win');  break;
+    case'bust':      payout=-bet; type='tl'; main='❌ 玩家爆牌！';  S('bust'); break;
+    case'lose':      payout=-bet; type='tl'; main='❌ 荷官獲勝！';  S('lose'); break;
+    case'push':      payout=0;    type='tp'; main='🤝 平　局';      S('push'); stats.p++; break;
+  }
+  const sub=payout>0?'+'+fmt(payout):payout<0?fmt(payout):'退回下注';
+
+  updateBal(payout);
+  stats.r++; if(payout>0)stats.w++; else if(payout<0)stats.l++;
+  updateStats(); addHistory(result,payout);
+
+  const tbl=$('table');
+  tbl.classList.remove('aw','al'); void tbl.offsetWidth;
+  tbl.classList.add(payout>=0?'aw':'al');
+
+  showBanner(type,main,sub);
+  updateScores(true);
+
+  setTimeout(()=>{
+    if(balance<=0){
+      setStatus('籌碼不足！');
+      if(confirm('籌碼已用完！補充 $1,000 繼續？'))updateBal(1000);
+    } else {
+      setStatus('請下注後按「發牌」開始新局');
+    }
+    phase='idle';
+    $('btn-deal').disabled=false;
+    setChips(true);
+  },2100);
+}
+
+/* ── HISTORY ── */
+function cStr(hand){
+  return hand.map(c=>{
+    const col=(c.s==='♥'||c.s==='♦')?'#e53935':'#f0ece0';
+    return`<span style="color:${col}">${c.v}${c.s}</span>`;
+  }).join(' ');
+}
+function addHistory(result,payout){
+  const lbl={blackjack:'BJ勝',win:'勝',dealerbust:'勝(爆)',bust:'敗(爆)',lose:'敗',push:'平'}[result];
+  const cls=payout>0?'win':payout<0?'lose':'push';
+  hist.unshift({ph:[...ph],dh:[...dh],lbl,cls,pay:(payout>=0?'+':'')+fmt(payout),bal:balance});
+  if(hist.length>10)hist.pop();
+  renderHistory();
+}
+function renderHistory(){
+  const el=$('hlist');
+  if(!hist.length){el.innerHTML='<div class="no-hist">尚無紀錄</div>';return;}
+  el.innerHTML=hist.map(h=>`
+    <div class="hi ${h.cls}">
+      <span class="hc">P: ${cStr(h.ph)} &nbsp;/&nbsp; D: ${cStr(h.dh)}</span>
+      <span class="hr ${h.cls}">${h.lbl} ${h.pay}</span>
+      <span class="hb">${fmt(h.bal)}</span>
+    </div>`).join('');
+}
+
+/* ── MODAL ── */
+function openModal(){$('modal').classList.add('open');}
+function closeModal(){$('modal').classList.remove('open');}
+
+document.addEventListener('keydown',e=>{
+  if($('modal').classList.contains('open')&&e.key==='Escape'){closeModal();return;}
+  if(e.target.tagName==='INPUT')return;
+  if(e.key==='Enter'&&phase==='idle'){e.preventDefault();dealHand();}
+  if((e.key==='h'||e.key==='H')&&phase==='player')hit();
+  if((e.key==='s'||e.key==='S')&&phase==='player')stand();
+  if((e.key==='d'||e.key==='D')&&phase==='player')dbl();
+});
+
+/* ── INIT ── */
+deck=mkDeck();
+$('bal').textContent=fmt(balance);
+setChips(true);
+updateStats();
+</script>
+</body>
+</html>

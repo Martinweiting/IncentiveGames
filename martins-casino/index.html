@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Martin's Casino</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--gold:#ffd700;--gold-dim:#b8922a;--bg:#080810;--surface:#10101c;--text:#d4c5a9;--text-dim:#7a6a5a}
+    body{background:var(--bg);background-image:radial-gradient(ellipse at top,#14142a 0%,var(--bg) 70%);color:var(--text);font-family:'Inter','Microsoft JhengHei',sans-serif;min-height:100vh;overflow-x:hidden}
+
+    .star{position:fixed;background:#fff;border-radius:50%;animation:twinkle var(--d,3s) ease-in-out infinite;opacity:0;pointer-events:none;z-index:0}
+    @keyframes twinkle{0%,100%{opacity:0;transform:scale(.5)}50%{opacity:var(--o,.4);transform:scale(1)}}
+
+    .hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;background:rgba(8,8,16,.92);border-bottom:1px solid rgba(255,215,0,.15);position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
+    .back-btn{color:var(--gold-dim);text-decoration:none;font-size:13px;font-weight:500;transition:color .2s;white-space:nowrap}
+    .back-btn:hover{color:var(--gold)}
+    .hdr-title{font-family:'Playfair Display',serif;font-size:clamp(16px,3vw,22px);font-weight:900;color:var(--gold);letter-spacing:3px;text-align:center;text-shadow:0 0 20px rgba(255,215,0,.3)}
+    .bal-block{display:flex;flex-direction:column;align-items:flex-end}
+    .bal-lbl{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1.5px}
+    .bal-amt{font-size:clamp(16px,3vw,22px);font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums}
+
+    .wrap{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:52px 24px 80px}
+
+    .casino-ttl{text-align:center;margin-bottom:44px}
+    .casino-ttl h1{font-family:'Playfair Display',serif;font-size:clamp(32px,7vw,60px);font-weight:900;color:var(--gold);letter-spacing:6px;text-shadow:0 0 30px rgba(255,215,0,.4);animation:glow 4s ease-in-out infinite}
+    .casino-ttl p{font-size:12px;color:var(--text-dim);letter-spacing:4px;margin-top:8px}
+    .divider{width:100px;height:1px;background:linear-gradient(90deg,transparent,var(--gold-dim),transparent);margin:18px auto 0}
+    @keyframes glow{0%,100%{text-shadow:0 0 30px rgba(255,215,0,.4)}50%{text-shadow:0 0 55px rgba(255,215,0,.7),0 0 90px rgba(255,215,0,.2)}}
+
+    .game-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:22px}
+
+    .game-card{position:relative;background:var(--surface);border:1px solid rgba(255,215,0,.15);border-radius:22px;padding:34px 26px 46px;text-decoration:none;color:inherit;transition:transform .3s,box-shadow .3s,border-color .3s;overflow:hidden;display:block}
+    .game-card::before{content:'';position:absolute;inset:0;border-radius:22px;background:linear-gradient(135deg,rgba(255,215,0,.05) 0%,transparent 60%);opacity:0;transition:opacity .3s}
+    .game-card:hover{transform:translateY(-8px) scale(1.02);border-color:rgba(255,215,0,.5);box-shadow:0 24px 60px rgba(0,0,0,.5),0 0 40px rgba(255,215,0,.1)}
+    .game-card:hover::before{opacity:1}
+
+    .game-icon{font-size:48px;margin-bottom:14px;display:block;filter:drop-shadow(0 4px 12px rgba(0,0,0,.5))}
+    .game-name{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--gold);margin-bottom:3px}
+    .game-en{font-size:10px;color:var(--text-dim);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px}
+    .game-desc{font-size:13px;color:var(--text-dim);line-height:1.65;margin-bottom:16px}
+    .game-tags{display:flex;flex-wrap:wrap;gap:6px}
+    .tag{font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(255,215,0,.08);color:var(--gold-dim);border:1px solid rgba(255,215,0,.2)}
+
+    .enter-hint{position:absolute;bottom:18px;right:22px;font-size:13px;color:var(--gold-dim);opacity:0;transform:translateX(-8px);transition:opacity .3s,transform .3s}
+    .game-card:hover .enter-hint{opacity:1;transform:translateX(0)}
+  </style>
+</head>
+<body>
+  <div id="stars"></div>
+  <header class="hdr">
+    <a href="../" class="back-btn">← 主廳</a>
+    <div class="hdr-title">♠ MARTIN'S CASINO ♠</div>
+    <div class="bal-block">
+      <span class="bal-lbl">籌碼</span>
+      <span class="bal-amt" id="bal">$1,000</span>
+    </div>
+  </header>
+  <main class="wrap">
+    <div class="casino-ttl">
+      <h1>MARTIN'S CASINO</h1>
+      <p>選擇遊戲 · CHOOSE YOUR GAME</p>
+      <div class="divider"></div>
+    </div>
+    <div class="game-grid">
+      <a href="dragon-gate/" class="game-card">
+        <span class="game-icon">🐉</span>
+        <div class="game-name">射龍門</div>
+        <div class="game-en">DRAGON GATE</div>
+        <div class="game-desc">兩張邊界牌決定龍門，猜第三張是否射入，碰柱雙倍扣除！</div>
+        <div class="game-tags"><span class="tag">運氣</span><span class="tag">快節奏</span><span class="tag">碰柱 ×2</span></div>
+        <span class="enter-hint">進入 →</span>
+      </a>
+      <a href="blackjack/" class="game-card">
+        <span class="game-icon">🃏</span>
+        <div class="game-name">21 點</div>
+        <div class="game-en">BLACKJACK</div>
+        <div class="game-desc">讓手牌盡量接近 21 點，擊敗荷官。天生 21 賠率 1.5 倍！</div>
+        <div class="game-tags"><span class="tag">策略</span><span class="tag">BJ 1.5x</span><span class="tag">加倍</span></div>
+        <span class="enter-hint">進入 →</span>
+      </a>
+      <a href="baccarat/" class="game-card">
+        <span class="game-icon">💎</span>
+        <div class="game-name">百家樂</div>
+        <div class="game-en">BACCARAT</div>
+        <div class="game-desc">下注閒家、莊家或和局，最靠近 9 點者獲勝。和局賠率 8:1！</div>
+        <div class="game-tags"><span class="tag">運氣</span><span class="tag">和局 8:1</span><span class="tag">莊家 0.95x</span></div>
+        <span class="enter-hint">進入 →</span>
+      </a>
+      <a href="slots/" class="game-card">
+        <span class="game-icon">🎰</span>
+        <div class="game-name">老虎機</div>
+        <div class="game-en">SLOT MACHINE</div>
+        <div class="game-desc">拉動拉桿，集中符號贏大獎！FEVER 模式、免費旋轉、JACKPOT 等你挑戰！</div>
+        <div class="game-tags"><span class="tag">JACKPOT</span><span class="tag">免費旋轉</span><span class="tag">FEVER ×2</span></div>
+        <span class="enter-hint">進入 →</span>
+      </a>
+    </div>
+  </main>
+  <script>
+    const sc=document.getElementById('stars');
+    for(let i=0;i<70;i++){const s=document.createElement('div');s.className='star';const sz=Math.random()*2+.5;s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2+Math.random()*4}s;--o:${.15+Math.random()*.5};animation-delay:${Math.random()*4}s`;sc.appendChild(s);}
+    const v=+localStorage.getItem('mc_chips');
+    document.getElementById('bal').textContent='$'+(v>0?v:1000).toLocaleString('en-US');
+  </script>
+</body>
+</html>

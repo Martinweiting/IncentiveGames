@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>百家樂 — Martin's Casino</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="../sounds.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --gold:#ffd700;--gold-dim:#b8922a;--bg:#080810;--surface:#10101c;
+      --felt:#0a2a0a;--felt2:#0d350d;--text:#d4c5a9;--text-dim:#7a6a5a;
+      --player:#3a7bd5;--banker:#c0392b;--tie:#27ae60;
+    }
+    body{background:var(--bg);color:var(--text);font-family:'Inter','Microsoft JhengHei',sans-serif;min-height:100vh;overflow-x:hidden}
+
+    .star{position:fixed;background:#fff;border-radius:50%;animation:twinkle var(--d,3s) ease-in-out infinite;opacity:0;pointer-events:none;z-index:0}
+    @keyframes twinkle{0%,100%{opacity:0;transform:scale(.5)}50%{opacity:var(--o,.4);transform:scale(1)}}
+
+    /* Header */
+    .hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;background:rgba(8,8,16,.92);border-bottom:1px solid rgba(255,215,0,.15);position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
+    .back-btn{color:var(--gold-dim);text-decoration:none;font-size:13px;font-weight:500;transition:color .2s;white-space:nowrap}
+    .back-btn:hover{color:var(--gold)}
+    .hdr-title{font-family:'Playfair Display',serif;font-size:clamp(16px,3vw,22px);font-weight:900;color:var(--gold);letter-spacing:3px;text-align:center;text-shadow:0 0 20px rgba(255,215,0,.3)}
+    .bal-block{display:flex;flex-direction:column;align-items:flex-end}
+    .bal-lbl{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1.5px}
+    .bal-amt{font-size:clamp(16px,3vw,22px);font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums}
+
+    /* Game nav */
+    .gnav{display:flex;justify-content:center;gap:8px;padding:14px 24px;background:rgba(8,8,16,.6);border-bottom:1px solid rgba(255,255,255,.06);flex-wrap:wrap}
+    .gnav a{font-size:12px;padding:6px 18px;border-radius:20px;text-decoration:none;color:var(--text-dim);border:1px solid rgba(255,255,255,.1);transition:all .2s}
+    .gnav a:hover{color:var(--text);border-color:rgba(255,215,0,.3)}
+    .gnav a.active{color:var(--gold);border-color:rgba(255,215,0,.5);background:rgba(255,215,0,.07)}
+
+    /* Main layout */
+    .wrap{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:28px 20px 80px}
+
+    /* Table */
+    .table{background:radial-gradient(ellipse at center,var(--felt2) 0%,var(--felt) 70%);border-radius:24px;border:2px solid rgba(255,215,0,.2);padding:28px 20px;margin-bottom:20px;box-shadow:0 20px 60px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.05)}
+
+    /* Seats */
+    .seats{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+    .seat{background:rgba(0,0,0,.3);border-radius:16px;padding:16px;border:1px solid rgba(255,255,255,.08)}
+    .seat-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;font-weight:600}
+    .seat.player .seat-label{color:var(--player)}
+    .seat.banker .seat-label{color:var(--banker)}
+    .seat-score{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:#fff;margin-bottom:10px;min-height:42px;line-height:1}
+    .cards-row{display:flex;gap:8px;min-height:90px;align-items:center;flex-wrap:wrap}
+
+    /* Card */
+    .card-wrap{width:58px;height:82px;perspective:600px;flex-shrink:0}
+    .card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .45s cubic-bezier(.4,0,.2,1)}
+    .card-inner.flipped{transform:rotateY(180deg)}
+    .card-face,.card-back{position:absolute;inset:0;border-radius:8px;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+    .card-face{background:#fff;display:flex;flex-direction:column;justify-content:space-between;padding:5px 6px;box-shadow:0 4px 12px rgba(0,0,0,.5)}
+    .card-back{background:linear-gradient(135deg,#1a1a3e 0%,#0d0d1f 50%,#1a1a3e 100%);border:2px solid rgba(255,215,0,.3);transform:rotateY(180deg);display:flex;align-items:center;justify-content:center;font-size:22px}
+    .card-rank{font-size:16px;font-weight:700;line-height:1}
+    .card-suit{font-size:14px;line-height:1}
+    .card-center{font-size:22px;text-align:center;line-height:1}
+    .red{color:#c0392b}
+    .black{color:#1a1a2e}
+
+    /* Natural badge */
+    .natural-badge{font-size:11px;font-weight:700;letter-spacing:1.5px;padding:3px 10px;border-radius:12px;display:inline-block;margin-top:6px}
+    .natural-badge.player{background:rgba(58,123,213,.2);color:#5a9bf5;border:1px solid rgba(58,123,213,.4)}
+    .natural-badge.banker{background:rgba(192,57,43,.2);color:#e74c3c;border:1px solid rgba(192,57,43,.4)}
+
+    /* Result overlay */
+    .result-bar{text-align:center;padding:14px;border-radius:14px;margin-bottom:18px;font-family:'Playfair Display',serif;font-size:22px;font-weight:700;letter-spacing:2px;opacity:0;transform:scale(.92);transition:opacity .3s,transform .3s;pointer-events:none}
+    .result-bar.show{opacity:1;transform:scale(1)}
+    .result-bar.win{background:rgba(39,174,96,.15);color:#2ecc71;border:1px solid rgba(39,174,96,.35)}
+    .result-bar.lose{background:rgba(192,57,43,.15);color:#e74c3c;border:1px solid rgba(192,57,43,.35)}
+    .result-bar.push{background:rgba(255,215,0,.1);color:var(--gold);border:1px solid rgba(255,215,0,.3)}
+
+    /* Bet section */
+    .bet-section{background:rgba(0,0,0,.3);border-radius:18px;padding:20px;border:1px solid rgba(255,255,255,.06)}
+    .bet-title{font-size:11px;color:var(--text-dim);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;text-align:center}
+
+    /* Bet type */
+    .bet-types{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px}
+    .bet-btn{padding:14px 8px;border-radius:14px;border:2px solid transparent;cursor:pointer;background:rgba(255,255,255,.04);transition:all .2s;text-align:center;user-select:none}
+    .bet-btn.player-btn{border-color:rgba(58,123,213,.3);color:#5a9bf5}
+    .bet-btn.banker-btn{border-color:rgba(192,57,43,.3);color:#e74c3c}
+    .bet-btn.tie-btn{border-color:rgba(39,174,96,.3);color:#2ecc71}
+    .bet-btn.selected.player-btn{background:rgba(58,123,213,.2);border-color:rgba(58,123,213,.7)}
+    .bet-btn.selected.banker-btn{background:rgba(192,57,43,.2);border-color:rgba(192,57,43,.7)}
+    .bet-btn.selected.tie-btn{background:rgba(39,174,96,.2);border-color:rgba(39,174,96,.7)}
+    .bet-btn:disabled{opacity:.35;cursor:not-allowed}
+    .btn-label{font-size:13px;font-weight:600;display:block}
+    .btn-en{font-size:10px;opacity:.7;letter-spacing:1px;display:block;margin-top:2px}
+    .btn-odds{font-size:12px;font-weight:700;margin-top:6px;display:block}
+
+    /* Amount controls */
+    .amount-row{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+    .amt-label{font-size:12px;color:var(--text-dim);min-width:36px}
+    .amt-input{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,215,0,.2);border-radius:10px;color:var(--gold);font-size:18px;font-weight:700;padding:10px 14px;text-align:center;font-variant-numeric:tabular-nums;outline:none;transition:border-color .2s}
+    .amt-input:focus{border-color:rgba(255,215,0,.5)}
+    .chips-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px}
+    .chip{font-size:12px;font-weight:700;padding:6px 14px;border-radius:20px;border:none;cursor:pointer;transition:all .2s;background:rgba(255,215,0,.12);color:var(--gold);border:1px solid rgba(255,215,0,.25)}
+    .chip:hover{background:rgba(255,215,0,.22);transform:translateY(-1px)}
+    .chip:active{transform:translateY(0)}
+
+    /* Action buttons */
+    .action-row{display:flex;gap:10px}
+    .btn{flex:1;padding:14px;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:1px}
+    .btn-deal{background:linear-gradient(135deg,#d4a017,#ffd700);color:#0d0d00}
+    .btn-deal:hover:not(:disabled){filter:brightness(1.1);transform:translateY(-2px);box-shadow:0 6px 20px rgba(255,215,0,.3)}
+    .btn-deal:disabled{opacity:.35;cursor:not-allowed;transform:none}
+    .btn-clear{background:rgba(255,255,255,.07);color:var(--text-dim);border:1px solid rgba(255,255,255,.1)}
+    .btn-clear:hover:not(:disabled){background:rgba(255,255,255,.12);color:var(--text)}
+    .btn-clear:disabled{opacity:.35;cursor:not-allowed}
+
+    /* Stats */
+    .stats-bar{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px;justify-content:center}
+    .stat{text-align:center;padding:10px 18px;background:rgba(0,0,0,.3);border-radius:12px;border:1px solid rgba(255,255,255,.06);min-width:70px}
+    .stat-val{font-size:20px;font-weight:700;color:var(--gold)}
+    .stat-lbl{font-size:10px;color:var(--text-dim);letter-spacing:1px;margin-top:2px}
+    .stat.player-stat .stat-val{color:#5a9bf5}
+    .stat.banker-stat .stat-val{color:#e74c3c}
+    .stat.tie-stat .stat-val{color:#2ecc71}
+
+    /* History */
+    .history-wrap{margin-top:18px}
+    .history-title{font-size:11px;color:var(--text-dim);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;text-align:center}
+    .history-dots{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;max-height:72px;overflow:hidden}
+    .dot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700}
+    .dot.P{background:rgba(58,123,213,.3);color:#5a9bf5;border:1px solid rgba(58,123,213,.5)}
+    .dot.B{background:rgba(192,57,43,.3);color:#e74c3c;border:1px solid rgba(192,57,43,.5)}
+    .dot.T{background:rgba(39,174,96,.3);color:#2ecc71;border:1px solid rgba(39,174,96,.5)}
+  </style>
+</head>
+<body>
+<div id="stars"></div>
+
+<header class="hdr">
+  <a href="../" class="back-btn">← 賭場大廳</a>
+  <div class="hdr-title">♠ MARTIN'S CASINO ♠</div>
+  <div class="bal-block">
+    <span class="bal-lbl">籌碼</span>
+    <span class="bal-amt" id="bal">$1,000</span>
+  </div>
+</header>
+
+<nav class="gnav">
+  <a href="../dragon-gate/">射龍門</a>
+  <a href="../blackjack/">21 點</a>
+  <a href="./" class="active">百家樂</a>
+</nav>
+
+<main class="wrap">
+  <!-- Stats -->
+  <div class="stats-bar">
+    <div class="stat player-stat"><div class="stat-val" id="s-p">0</div><div class="stat-lbl">閒勝</div></div>
+    <div class="stat banker-stat"><div class="stat-val" id="s-b">0</div><div class="stat-lbl">莊勝</div></div>
+    <div class="stat tie-stat"><div class="stat-val" id="s-t">0</div><div class="stat-lbl">和局</div></div>
+    <div class="stat"><div class="stat-val" id="s-n">0</div><div class="stat-lbl">局數</div></div>
+  </div>
+
+  <!-- Table -->
+  <div class="table">
+    <div id="result-bar" class="result-bar"></div>
+
+    <div class="seats">
+      <div class="seat player">
+        <div class="seat-label">閒家 PLAYER</div>
+        <div class="seat-score" id="p-score">—</div>
+        <div class="cards-row" id="p-cards"></div>
+        <span id="p-natural" style="display:none" class="natural-badge player">NATURAL</span>
+      </div>
+      <div class="seat banker">
+        <div class="seat-label">莊家 BANKER</div>
+        <div class="seat-score" id="b-score">—</div>
+        <div class="cards-row" id="b-cards"></div>
+        <span id="b-natural" style="display:none" class="natural-badge banker">NATURAL</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bet section -->
+  <div class="bet-section">
+    <div class="bet-title">選擇下注方 · CHOOSE YOUR BET</div>
+    <div class="bet-types">
+      <button class="bet-btn player-btn" id="btn-player" onclick="selectSide('player')">
+        <span class="btn-label">閒家</span>
+        <span class="btn-en">PLAYER</span>
+        <span class="btn-odds">賠率 1:1</span>
+      </button>
+      <button class="bet-btn banker-btn" id="btn-banker" onclick="selectSide('banker')">
+        <span class="btn-label">莊家</span>
+        <span class="btn-en">BANKER</span>
+        <span class="btn-odds">賠率 0.95:1</span>
+      </button>
+      <button class="bet-btn tie-btn" id="btn-tie" onclick="selectSide('tie')">
+        <span class="btn-label">和局</span>
+        <span class="btn-en">TIE</span>
+        <span class="btn-odds">賠率 8:1</span>
+      </button>
+    </div>
+
+    <div class="amount-row">
+      <span class="amt-label">下注</span>
+      <input type="number" id="bet-input" class="amt-input" value="100" min="10" max="10000" step="10">
+    </div>
+    <div class="chips-row">
+      <button class="chip" onclick="addBet(10)">+10</button>
+      <button class="chip" onclick="addBet(50)">+50</button>
+      <button class="chip" onclick="addBet(100)">+100</button>
+      <button class="chip" onclick="addBet(500)">+500</button>
+      <button class="chip" onclick="setBetMax()">全押</button>
+    </div>
+    <div class="action-row">
+      <button class="btn btn-clear" id="btn-clear" onclick="clearBet()">清除</button>
+      <button class="btn btn-deal" id="btn-deal" onclick="deal()">發牌</button>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="history-wrap">
+    <div class="history-title">歷史紀錄</div>
+    <div class="history-dots" id="history-dots"></div>
+  </div>
+</main>
+
+<script>
+// ── Balance ──────────────────────────────────────────────
+let balance = (()=>{ const v=+localStorage.getItem('mc_chips'); return(v>0)?v:1000; })();
+localStorage.setItem('mc_chips', balance);
+function saveBal(){ localStorage.setItem('mc_chips', balance); document.getElementById('bal').textContent='$'+balance.toLocaleString('en-US'); }
+saveBal();
+
+// ── Safe sound ───────────────────────────────────────────
+function S(name){ try{ if(typeof Snd!=='undefined') Snd[name](); }catch(e){} }
+
+// ── Stars ────────────────────────────────────────────────
+const sc=document.getElementById('stars');
+for(let i=0;i<70;i++){const s=document.createElement('div');s.className='star';const sz=Math.random()*2+.5;s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2+Math.random()*4}s;--o:${.15+Math.random()*.5};animation-delay:${Math.random()*4}s`;sc.appendChild(s);}
+
+// ── Deck ─────────────────────────────────────────────────
+const SUITS=['♠','♥','♦','♣'];
+const RANKS=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+let deck=[];
+function buildDeck(){
+  deck=[];
+  for(let d=0;d<8;d++) for(const s of SUITS) for(const r of RANKS) deck.push({s,r});
+  for(let i=deck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]];}
+}
+function draw(){ if(deck.length<15) buildDeck(); return deck.pop(); }
+function cardValue(r){ if(r==='A') return 1; if(['10','J','Q','K'].includes(r)) return 0; return +r; }
+function handScore(hand){ return hand.reduce((s,c)=>s+cardValue(c.r),0)%10; }
+function isRed(s){ return s==='♥'||s==='♦'; }
+
+// ── State ─────────────────────────────────────────────────
+let side=null, playing=false;
+let pH=[], bH=[];
+let stats={p:0,b:0,t:0,n:0};
+let history=[];
+
+function selectSide(s){
+  if(playing) return;
+  side=s;
+  ['player','banker','tie'].forEach(x=>{
+    document.getElementById('btn-'+x).classList.toggle('selected',x===s);
+  });
+  S('chip');
+}
+
+function addBet(n){
+  if(playing) return;
+  const inp=document.getElementById('bet-input');
+  inp.value=Math.min(10000,Math.max(10,(+inp.value||0)+n));
+}
+function setBetMax(){
+  if(playing) return;
+  document.getElementById('bet-input').value=balance;
+}
+function clearBet(){
+  if(playing) return;
+  document.getElementById('bet-input').value=100;
+  side=null;
+  ['player','banker','tie'].forEach(x=>document.getElementById('btn-'+x).classList.remove('selected'));
+}
+
+// ── Card DOM ──────────────────────────────────────────────
+function makeCardEl(card, faceUp){
+  const wrap=document.createElement('div'); wrap.className='card-wrap';
+  const inner=document.createElement('div'); inner.className='card-inner';
+  const face=document.createElement('div'); face.className='card-face';
+  const back=document.createElement('div'); back.className='card-back'; back.textContent='🂠';
+  const colorClass=isRed(card.s)?'red':'black';
+  face.innerHTML=`<div class="card-rank ${colorClass}">${card.r}<br>${card.s}</div><div class="card-center ${colorClass}">${card.s}</div>`;
+  inner.appendChild(face); inner.appendChild(back);
+  wrap.appendChild(inner);
+  if(!faceUp) inner.classList.add('flipped');
+  return {wrap,inner};
+}
+
+function addCard(containerId, card, faceUp, cb){
+  const el=document.getElementById(containerId);
+  const {wrap,inner}=makeCardEl(card,true);
+  inner.classList.add('flipped'); // start face-down
+  el.appendChild(wrap);
+  S('deal');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    if(faceUp) inner.classList.remove('flipped');
+    setTimeout(()=>{ if(cb) cb(inner); },480);
+  }));
+  return inner;
+}
+
+function flipCard(inner, cb){
+  S('flip');
+  inner.classList.remove('flipped');
+  setTimeout(()=>{ if(cb) cb(); },480);
+}
+
+// ── Score display ─────────────────────────────────────────
+function updateScores(){
+  const ps=handScore(pH), bs=handScore(bH);
+  document.getElementById('p-score').textContent=pH.length?ps:'—';
+  document.getElementById('b-score').textContent=bH.length?bs:'—';
+}
+
+// ── Result bar ────────────────────────────────────────────
+function showResult(text,cls){
+  const el=document.getElementById('result-bar');
+  el.textContent=text; el.className='result-bar '+cls;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('show')));
+}
+function hideResult(){
+  const el=document.getElementById('result-bar');
+  el.classList.remove('show');
+}
+
+// ── Stats & history ───────────────────────────────────────
+function addHistory(r){
+  history.unshift(r);
+  if(history.length>60) history.pop();
+  const box=document.getElementById('history-dots');
+  box.innerHTML='';
+  history.forEach(x=>{
+    const d=document.createElement('div');
+    d.className='dot '+x; d.textContent=x;
+    box.appendChild(d);
+  });
+}
+function updateStats(){
+  document.getElementById('s-p').textContent=stats.p;
+  document.getElementById('s-b').textContent=stats.b;
+  document.getElementById('s-t').textContent=stats.t;
+  document.getElementById('s-n').textContent=stats.n;
+}
+
+// ── Controls lock ─────────────────────────────────────────
+function lockControls(lock){
+  playing=lock;
+  ['btn-player','btn-banker','btn-tie','btn-deal','btn-clear'].forEach(id=>{
+    document.getElementById(id).disabled=lock;
+  });
+  document.getElementById('bet-input').disabled=lock;
+}
+
+// ── Main deal flow ────────────────────────────────────────
+function deal(){
+  if(playing) return;
+  if(!side){ alert('請先選擇下注方！'); return; }
+  const bet=Math.floor(+document.getElementById('bet-input').value)||0;
+  if(bet<10){ alert('最低下注 $10'); return; }
+  if(bet>balance){ alert('籌碼不足！'); return; }
+
+  // Setup
+  if(deck.length<15) buildDeck();
+  pH=[]; bH=[];
+  document.getElementById('p-cards').innerHTML='';
+  document.getElementById('b-cards').innerHTML='';
+  document.getElementById('p-natural').style.display='none';
+  document.getElementById('b-natural').style.display='none';
+  document.getElementById('p-score').textContent='—';
+  document.getElementById('b-score').textContent='—';
+  hideResult();
+  lockControls(true);
+
+  // Draw initial 4 cards
+  const p1=draw(), b1=draw(), p2=draw(), b2=draw();
+  pH.push(p1); bH.push(b1); pH.push(p2); bH.push(b2);
+
+  // Sequentially deal: P1, B1, P2, B2
+  addCard('p-cards', p1, true, ()=>{
+    addCard('b-cards', b1, true, ()=>{
+      addCard('p-cards', p2, true, ()=>{
+        addCard('b-cards', b2, true, ()=>{
+          updateScores();
+          afterInitialDeal(bet);
+        });
+      });
+    });
+  });
+}
+
+function afterInitialDeal(bet){
+  const ps=handScore(pH), bs=handScore(bH);
+  const pNat=ps>=8, bNat=bs>=8;
+
+  if(pNat){ document.getElementById('p-natural').style.display='inline-block'; }
+  if(bNat){ document.getElementById('b-natural').style.display='inline-block'; }
+
+  if(pNat||bNat){
+    // Natural — no more cards
+    setTimeout(()=>settle(bet),400);
+    return;
+  }
+
+  // Player draw rule: draw if total ≤ 5
+  const pDraw=ps<=5;
+  if(pDraw){
+    const p3=draw(); pH.push(p3);
+    addCard('p-cards', p3, true, ()=>{
+      updateScores();
+      // Banker draw rule with player's 3rd card
+      const bDraw=bankerDraws(handScore(bH), cardValue(p3.r));
+      if(bDraw){
+        const b3=draw(); bH.push(b3);
+        addCard('b-cards', b3, true, ()=>{
+          updateScores();
+          setTimeout(()=>settle(bet),400);
+        });
+      } else {
+        setTimeout(()=>settle(bet),400);
+      }
+    });
+  } else {
+    // Player stood: banker draws if total ≤ 5
+    const bDraw=handScore(bH)<=5;
+    if(bDraw){
+      const b3=draw(); bH.push(b3);
+      addCard('b-cards', b3, true, ()=>{
+        updateScores();
+        setTimeout(()=>settle(bet),400);
+      });
+    } else {
+      setTimeout(()=>settle(bet),400);
+    }
+  }
+}
+
+// Banker drawing rules (player drew a 3rd card)
+function bankerDraws(bScore, p3val){
+  if(bScore<=2) return true;
+  if(bScore===3) return p3val!==8;
+  if(bScore===4) return p3val>=2&&p3val<=7;
+  if(bScore===5) return p3val>=4&&p3val<=7;
+  if(bScore===6) return p3val===6||p3val===7;
+  return false; // 7+: stand
+}
+
+function settle(bet){
+  const ps=handScore(pH), bs=handScore(bH);
+  stats.n++;
+
+  let result, resultText, resultCls, delta=0;
+
+  if(ps===bs){
+    // Tie
+    result='T'; stats.t++;
+    if(side==='tie'){
+      delta=bet*8;
+      resultText=`和局！閒 ${ps} = 莊 ${bs}　贏得 $${delta.toLocaleString()}`;
+      resultCls='win';
+      S('win');
+    } else {
+      // Player/Banker bets push (returned)
+      delta=0;
+      resultText=`和局！閒 ${ps} = 莊 ${bs}　下注退回`;
+      resultCls='push';
+      S('push');
+    }
+  } else if(ps>bs){
+    // Player wins
+    result='P'; stats.p++;
+    if(side==='player'){
+      delta=bet;
+      resultText=`閒家勝！閒 ${ps} > 莊 ${bs}　贏得 $${delta.toLocaleString()}`;
+      resultCls='win'; S('win');
+    } else if(side==='tie'){
+      delta=-bet;
+      resultText=`閒家勝！閒 ${ps} > 莊 ${bs}　輸了 $${bet.toLocaleString()}`;
+      resultCls='lose'; S('lose');
+    } else {
+      delta=-bet;
+      resultText=`閒家勝！閒 ${ps} > 莊 ${bs}　輸了 $${bet.toLocaleString()}`;
+      resultCls='lose'; S('lose');
+    }
+  } else {
+    // Banker wins
+    result='B'; stats.b++;
+    if(side==='banker'){
+      delta=Math.floor(bet*0.95);
+      resultText=`莊家勝！莊 ${bs} > 閒 ${ps}　贏得 $${delta.toLocaleString()}`;
+      resultCls='win'; S('win');
+    } else if(side==='tie'){
+      delta=-bet;
+      resultText=`莊家勝！莊 ${bs} > 閒 ${ps}　輸了 $${bet.toLocaleString()}`;
+      resultCls='lose'; S('lose');
+    } else {
+      delta=-bet;
+      resultText=`莊家勝！莊 ${bs} > 閒 ${ps}　輸了 $${bet.toLocaleString()}`;
+      resultCls='lose'; S('lose');
+    }
+  }
+
+  // Accounting: deduct bet, return bet+winnings on win, return bet on push
+  balance -= bet;
+  if(ps===bs && side!=='tie'){
+    balance += bet; // push: return bet
+  } else if(delta>0){
+    balance += bet + delta; // win: return bet + profit
+  }
+  // loss: bet stays deducted
+
+  if(balance<=0){ balance=1000; resultText+=' (籌碼重置)'; }
+  saveBal();
+
+  showResult(resultText, resultCls);
+  addHistory(result);
+  updateStats();
+  lockControls(false);
+}
+
+// Init
+buildDeck();
+updateStats();
+</script>
+</body>
+</html>
