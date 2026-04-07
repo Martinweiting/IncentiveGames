@@ -135,7 +135,7 @@
 <div id="stars"></div>
 
 <header class="hdr">
-  <a href="../" class="back-btn">← 賭場大廳</a>
+  <a href="../casino/" class="back-btn">← 賭場大廳</a>
   <div class="hdr-title">♠ MARTIN'S CASINO ♠</div>
   <div class="bal-block">
     <span class="bal-lbl">籌碼</span>
@@ -147,6 +147,8 @@
   <a href="../dragon-gate/">射龍門</a>
   <a href="../blackjack/">21 點</a>
   <a href="./" class="active">百家樂</a>
+  <a href="../slots/">老虎機</a>
+  <a href="../gacha/">🎪 扭蛋機</a>
 </nav>
 
 <main class="wrap">
@@ -225,9 +227,11 @@
 
 <script>
 // ── Balance ──────────────────────────────────────────────
-let balance = (()=>{ const v=+localStorage.getItem('mc_chips'); return(v>0)?v:1000; })();
-localStorage.setItem('mc_chips', balance);
-function saveBal(){ localStorage.setItem('mc_chips', balance); document.getElementById('bal').textContent='$'+balance.toLocaleString('en-US'); }
+function getCookie(k){return+((document.cookie.match('(?:^|; )'+k+'=([^;]*)')||[])[1]||0);}
+function setCookie(k,v){document.cookie=k+'='+v+';max-age=31536000;path=/';}
+let balance=(()=>{const v=getCookie('mc_chips');return v>0?v:1000;})();
+setCookie('mc_chips',balance);
+function saveBal(){setCookie('mc_chips',balance);document.getElementById('bal').textContent='$'+balance.toLocaleString('en-US');}
 saveBal();
 
 // ── Safe sound ───────────────────────────────────────────

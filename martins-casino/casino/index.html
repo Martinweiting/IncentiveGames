@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Martin's Casino</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--gold:#ffd700;--gold-dim:#b8922a;--bg:#080810;--surface:#10101c;--surface2:#14141f;--text:#d4c5a9;--text-dim:#7a6a5a}
+    body{background:var(--bg);background-image:radial-gradient(ellipse at top,#14142a 0%,var(--bg) 70%);color:var(--text);font-family:'Inter','Microsoft JhengHei',sans-serif;min-height:100vh;overflow-x:hidden}
+
+    .star{position:fixed;background:#fff;border-radius:50%;animation:twinkle var(--d,3s) ease-in-out infinite;opacity:0;pointer-events:none;z-index:0}
+    @keyframes twinkle{0%,100%{opacity:0;transform:scale(.5)}50%{opacity:var(--o,.4);transform:scale(1)}}
+
+    .hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;background:rgba(8,8,16,.92);border-bottom:1px solid rgba(255,215,0,.15);position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
+    .back-btn{color:var(--gold-dim);text-decoration:none;font-size:13px;font-weight:500;transition:color .2s;white-space:nowrap}
+    .back-btn:hover{color:var(--gold)}
+    .hdr-title{font-family:'Playfair Display',serif;font-size:clamp(16px,3vw,22px);font-weight:900;color:var(--gold);letter-spacing:3px;text-align:center;text-shadow:0 0 20px rgba(255,215,0,.3)}
+    .bal-block{display:flex;flex-direction:column;align-items:flex-end}
+    .bal-lbl{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1.5px}
+    .bal-amt{font-size:clamp(16px,3vw,22px);font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums}
+
+    .wrap{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:52px 24px 100px}
+
+    .hero{text-align:center;margin-bottom:64px}
+    .hero h1{font-family:'Playfair Display',serif;font-size:clamp(32px,7vw,60px);font-weight:900;color:var(--gold);letter-spacing:6px;text-shadow:0 0 30px rgba(255,215,0,.4);animation:glow 4s ease-in-out infinite}
+    .hero p{font-size:12px;color:var(--text-dim);letter-spacing:4px;margin-top:8px}
+    .divider{width:100px;height:1px;background:linear-gradient(90deg,transparent,var(--gold-dim),transparent);margin:18px auto 0}
+    @keyframes glow{0%,100%{text-shadow:0 0 30px rgba(255,215,0,.4)}50%{text-shadow:0 0 55px rgba(255,215,0,.7),0 0 90px rgba(255,215,0,.2)}}
+
+    .category{margin-bottom:60px}
+    .cat-header{display:flex;align-items:center;gap:14px;margin-bottom:24px;padding-bottom:14px;border-bottom:1px solid rgba(255,215,0,.12)}
+    .cat-icon{font-size:28px;filter:drop-shadow(0 2px 8px rgba(255,215,0,.3))}
+    .cat-title{font-family:'Playfair Display',serif;font-size:clamp(18px,3vw,24px);font-weight:700;color:var(--gold);letter-spacing:2px}
+    .cat-en{font-size:10px;color:var(--text-dim);letter-spacing:3px;text-transform:uppercase;margin-top:2px}
+    .cat-count{margin-left:auto;font-size:11px;color:var(--text-dim);border:1px solid rgba(255,215,0,.15);border-radius:20px;padding:4px 12px;letter-spacing:1px}
+
+    .game-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px}
+
+    .game-card{position:relative;background:var(--surface);border:1px solid rgba(255,215,0,.15);border-radius:22px;padding:32px 26px 44px;text-decoration:none;color:inherit;transition:transform .3s,box-shadow .3s,border-color .3s;overflow:hidden;display:block}
+    .game-card::before{content:'';position:absolute;inset:0;border-radius:22px;background:linear-gradient(135deg,rgba(255,215,0,.06) 0%,transparent 60%);opacity:0;transition:opacity .3s}
+    .game-card:hover{transform:translateY(-8px) scale(1.02);border-color:rgba(255,215,0,.5);box-shadow:0 24px 60px rgba(0,0,0,.5),0 0 40px rgba(255,215,0,.1)}
+    .game-card:hover::before{opacity:1}
+    .game-card.coming-soon{cursor:default;opacity:.55;pointer-events:none}
+
+    .game-icon{font-size:48px;margin-bottom:14px;display:block;filter:drop-shadow(0 4px 12px rgba(0,0,0,.5))}
+    .game-name{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--gold);margin-bottom:3px}
+    .game-en{font-size:10px;color:var(--text-dim);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px}
+    .game-desc{font-size:13px;color:var(--text-dim);line-height:1.65;margin-bottom:16px}
+    .game-tags{display:flex;flex-wrap:wrap;gap:6px}
+    .tag{font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(255,215,0,.08);color:var(--gold-dim);border:1px solid rgba(255,215,0,.2)}
+    .tag.soon{background:rgba(120,120,180,.1);color:#7a7ab8;border-color:rgba(120,120,180,.25)}
+
+    .enter-hint{position:absolute;bottom:18px;right:22px;font-size:13px;color:var(--gold-dim);opacity:0;transform:translateX(-8px);transition:opacity .3s,transform .3s}
+    .game-card:hover .enter-hint{opacity:1;transform:translateX(0)}
+
+    .card-accent-bar{position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:0 3px 3px 0;opacity:.6}
+    .card-bar-card{background:linear-gradient(180deg,#7ec8f7,#3a7bd5)}
+    .card-bar-slot{background:linear-gradient(180deg,#f7c97e,#d57a3a)}
+    .card-bar-dice{background:linear-gradient(180deg,#b07ef7,#7a3ad5)}
+  </style>
+</head>
+<body>
+  <div id="stars"></div>
+
+  <header class="hdr">
+    <a href="../" class="back-btn">← 主選單</a>
+    <div class="hdr-title">♠ MARTIN'S CASINO ♠</div>
+    <div class="bal-block">
+      <span class="bal-lbl">籌碼</span>
+      <span class="bal-amt" id="bal">$1,000</span>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="hero">
+      <h1>MARTIN'S CASINO</h1>
+      <p>選擇遊戲類型 · CHOOSE YOUR GAME TYPE</p>
+      <div class="divider"></div>
+    </div>
+
+    <!-- 卡牌遊戲 -->
+    <section class="category">
+      <div class="cat-header">
+        <span class="cat-icon">🃏</span>
+        <div>
+          <div class="cat-title">卡牌遊戲</div>
+          <div class="cat-en">CARD GAMES</div>
+        </div>
+        <span class="cat-count">3 款遊戲</span>
+      </div>
+      <div class="game-grid">
+
+        <a href="../dragon-gate/" class="game-card">
+          <span class="card-accent-bar card-bar-card"></span>
+          <span class="game-icon">🐉</span>
+          <div class="game-name">射龍門</div>
+          <div class="game-en">DRAGON GATE</div>
+          <div class="game-desc">兩張邊界牌決定龍門，猜第三張是否射入，碰柱雙倍扣除！</div>
+          <div class="game-tags"><span class="tag">運氣</span><span class="tag">快節奏</span><span class="tag">碰柱 ×2</span></div>
+          <span class="enter-hint">進入 →</span>
+        </a>
+
+        <a href="../blackjack/" class="game-card">
+          <span class="card-accent-bar card-bar-card"></span>
+          <span class="game-icon">🂡</span>
+          <div class="game-name">21 點</div>
+          <div class="game-en">BLACKJACK</div>
+          <div class="game-desc">讓手牌盡量接近 21 點，擊敗荷官。天生 21 賠率 1.5 倍！</div>
+          <div class="game-tags"><span class="tag">策略</span><span class="tag">BJ 1.5x</span><span class="tag">加倍</span></div>
+          <span class="enter-hint">進入 →</span>
+        </a>
+
+        <a href="../baccarat/" class="game-card">
+          <span class="card-accent-bar card-bar-card"></span>
+          <span class="game-icon">💎</span>
+          <div class="game-name">百家樂</div>
+          <div class="game-en">BACCARAT</div>
+          <div class="game-desc">下注閒家、莊家或和局，最靠近 9 點者獲勝。和局賠率 8:1！</div>
+          <div class="game-tags"><span class="tag">運氣</span><span class="tag">和局 8:1</span><span class="tag">莊家 0.95x</span></div>
+          <span class="enter-hint">進入 →</span>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- 機台遊戲 -->
+    <section class="category">
+      <div class="cat-header">
+        <span class="cat-icon">🎰</span>
+        <div>
+          <div class="cat-title">機台遊戲</div>
+          <div class="cat-en">SLOT MACHINES</div>
+        </div>
+        <span class="cat-count">1 款遊戲</span>
+      </div>
+      <div class="game-grid">
+
+        <a href="../slots/" class="game-card">
+          <span class="card-accent-bar card-bar-slot"></span>
+          <span class="game-icon">🎰</span>
+          <div class="game-name">老虎機</div>
+          <div class="game-en">SLOT MACHINE</div>
+          <div class="game-desc">拉動拉桿，集中符號贏大獎！FEVER 模式、免費旋轉、JACKPOT 等你挑戰！</div>
+          <div class="game-tags"><span class="tag">JACKPOT</span><span class="tag">免費旋轉</span><span class="tag">FEVER ×2</span></div>
+          <span class="enter-hint">進入 →</span>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- 扭蛋機 -->
+    <section class="category">
+      <div class="cat-header">
+        <span class="cat-icon">🎪</span>
+        <div>
+          <div class="cat-title">扭蛋機</div>
+          <div class="cat-en">CAPSULE MACHINE</div>
+        </div>
+        <span class="cat-count">1 款遊戲</span>
+      </div>
+      <div class="game-grid">
+
+        <a href="../gacha/" class="game-card">
+          <span class="card-accent-bar" style="background:linear-gradient(180deg,#c87fff,#8840cc)"></span>
+          <span class="game-icon">🎪</span>
+          <div class="game-name">神秘扭蛋機</div>
+          <div class="game-en">MYSTERY CAPSULE</div>
+          <div class="game-desc">花費籌碼抽取神秘小寵物，收集全部 15 種！傳說保底 50 抽，十連享九折優惠。</div>
+          <div class="game-tags"><span class="tag" style="color:#c87fff;border-color:rgba(200,100,255,.3)">15 種寵物</span><span class="tag" style="color:#c87fff;border-color:rgba(200,100,255,.3)">傳說 4%</span><span class="tag" style="color:#c87fff;border-color:rgba(200,100,255,.3)">保底 50 抽</span></div>
+          <span class="enter-hint" style="color:#a860dd">進入 →</span>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- 骰子遊戲 -->
+    <section class="category">
+      <div class="cat-header">
+        <span class="cat-icon">🎲</span>
+        <div>
+          <div class="cat-title">骰子遊戲</div>
+          <div class="cat-en">DICE GAMES</div>
+        </div>
+        <span class="cat-count">即將推出</span>
+      </div>
+      <div class="game-grid">
+
+        <div class="game-card coming-soon">
+          <span class="card-accent-bar card-bar-dice"></span>
+          <span class="game-icon">🎲</span>
+          <div class="game-name">大小</div>
+          <div class="game-en">SIC BO</div>
+          <div class="game-desc">三顆骰子開出大或小，猜對賠率 1:1，特殊點數組合賠率更高！</div>
+          <div class="game-tags"><span class="tag soon">即將推出</span><span class="tag soon">大小</span><span class="tag soon">點數組合</span></div>
+        </div>
+
+        <div class="game-card coming-soon">
+          <span class="card-accent-bar card-bar-dice"></span>
+          <span class="game-icon">🎯</span>
+          <div class="game-name">骰寶</div>
+          <div class="game-en">CHUCK-A-LUCK</div>
+          <div class="game-desc">下注骰子點數，開出越多顆對應點數賠率越高，最高 3:1！</div>
+          <div class="game-tags"><span class="tag soon">即將推出</span><span class="tag soon">倍率</span><span class="tag soon">3x</span></div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const sc=document.getElementById('stars');
+    for(let i=0;i<70;i++){
+      const s=document.createElement('div');
+      s.className='star';
+      const sz=Math.random()*2+.5;
+      s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2+Math.random()*4}s;--o:${.15+Math.random()*.5};animation-delay:${Math.random()*4}s`;
+      sc.appendChild(s);
+    }
+    const v=+((document.cookie.match('(?:^|; )mc_chips=([^;]*)')||[])[1]||0);
+    document.getElementById('bal').textContent='$'+(v>0?v:1000).toLocaleString('en-US');
+  </script>
+</body>
+</html>

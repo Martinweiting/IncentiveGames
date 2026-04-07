@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小工具</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--blue:#8ca0ff;--blue-dim:#4a5ab8;--bg:#08080f;--surface:#0e0e1c;--text:#c8c5d4;--text-dim:#5a5a7a}
+    body{background:var(--bg);background-image:radial-gradient(ellipse at top,#10102a 0%,var(--bg) 70%);color:var(--text);font-family:'Inter','Microsoft JhengHei',sans-serif;min-height:100vh;overflow-x:hidden}
+
+    .star{position:fixed;background:#fff;border-radius:50%;animation:twinkle var(--d,3s) ease-in-out infinite;opacity:0;pointer-events:none;z-index:0}
+    @keyframes twinkle{0%,100%{opacity:0;transform:scale(.5)}50%{opacity:var(--o,.4);transform:scale(1)}}
+
+    .hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;background:rgba(8,8,15,.92);border-bottom:1px solid rgba(140,160,255,.15);position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
+    .back-btn{color:var(--blue-dim);text-decoration:none;font-size:13px;font-weight:500;transition:color .2s;white-space:nowrap}
+    .back-btn:hover{color:var(--blue)}
+    .hdr-title{font-family:'Playfair Display',serif;font-size:clamp(16px,3vw,22px);font-weight:900;color:var(--blue);letter-spacing:3px;text-align:center;text-shadow:0 0 20px rgba(140,160,255,.3)}
+    .hdr-spacer{width:80px}
+
+    .wrap{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:52px 24px 100px}
+
+    .hero{text-align:center;margin-bottom:56px}
+    .hero h1{font-family:'Playfair Display',serif;font-size:clamp(32px,7vw,60px);font-weight:900;color:var(--blue);letter-spacing:5px;text-shadow:0 0 30px rgba(140,160,255,.4);animation:glow 4s ease-in-out infinite}
+    .hero p{font-size:12px;color:var(--text-dim);letter-spacing:4px;margin-top:8px}
+    .divider{width:100px;height:1px;background:linear-gradient(90deg,transparent,var(--blue-dim),transparent);margin:18px auto 0}
+    @keyframes glow{0%,100%{text-shadow:0 0 30px rgba(140,160,255,.4)}50%{text-shadow:0 0 55px rgba(140,160,255,.7),0 0 90px rgba(140,160,255,.2)}}
+
+    .tool-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px}
+
+    .tool-card{position:relative;background:var(--surface);border:1px solid rgba(140,160,255,.15);border-radius:22px;padding:32px 26px 44px;text-decoration:none;color:inherit;transition:transform .3s,box-shadow .3s,border-color .3s;overflow:hidden;display:block;cursor:default;opacity:.55;pointer-events:none}
+    .tool-card::before{content:'';position:absolute;inset:0;border-radius:22px;background:linear-gradient(135deg,rgba(140,160,255,.06) 0%,transparent 60%);opacity:0;transition:opacity .3s}
+
+    .tool-icon{font-size:48px;margin-bottom:14px;display:block;filter:drop-shadow(0 4px 12px rgba(0,0,0,.5))}
+    .tool-name{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--blue);margin-bottom:3px}
+    .tool-en{font-size:10px;color:var(--text-dim);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px}
+    .tool-desc{font-size:13px;color:var(--text-dim);line-height:1.65;margin-bottom:16px}
+    .tool-tags{display:flex;flex-wrap:wrap;gap:6px}
+    .tag{font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(140,160,255,.08);color:var(--blue-dim);border:1px solid rgba(140,160,255,.2)}
+
+    .badge{position:absolute;top:16px;right:18px;font-size:10px;padding:3px 9px;border-radius:20px;letter-spacing:1px;font-weight:600;background:rgba(140,160,255,.12);color:var(--blue);border:1px solid rgba(140,160,255,.25)}
+  </style>
+</head>
+<body>
+  <div id="stars"></div>
+
+  <header class="hdr">
+    <a href="../" class="back-btn">← 主選單</a>
+    <div class="hdr-title">🛠️ 小工具</div>
+    <div class="hdr-spacer"></div>
+  </header>
+
+  <main class="wrap">
+    <div class="hero">
+      <h1>小工具</h1>
+      <p>輔助決策 · SMART TOOLS</p>
+      <div class="divider"></div>
+    </div>
+
+    <div class="tool-grid">
+
+      <div class="tool-card">
+        <span class="badge">即將推出</span>
+        <span class="tool-icon">🔢</span>
+        <div class="tool-name">籌碼換算機</div>
+        <div class="tool-en">CHIP CALCULATOR</div>
+        <div class="tool-desc">快速換算不同面額籌碼的等值金額，支援自訂面額與多幣別顯示。</div>
+        <div class="tool-tags"><span class="tag">換算</span><span class="tag">面額</span><span class="tag">多幣別</span></div>
+      </div>
+
+      <div class="tool-card">
+        <span class="badge">即將推出</span>
+        <span class="tool-icon">📊</span>
+        <div class="tool-name">勝率分析器</div>
+        <div class="tool-en">WIN RATE ANALYZER</div>
+        <div class="tool-desc">輸入你的勝負記錄，自動計算勝率、期望值與標準差，用數據看清趨勢。</div>
+        <div class="tool-tags"><span class="tag">統計</span><span class="tag">期望值</span><span class="tag">視覺化</span></div>
+      </div>
+
+      <div class="tool-card">
+        <span class="badge">即將推出</span>
+        <span class="tool-icon">🃏</span>
+        <div class="tool-name">機率計算器</div>
+        <div class="tool-en">PROBABILITY CALC</div>
+        <div class="tool-desc">針對各款牌局計算特定牌出現的機率，幫助你在關鍵時刻做出更優決策。</div>
+        <div class="tool-tags"><span class="tag">機率</span><span class="tag">牌局分析</span><span class="tag">輔助決策</span></div>
+      </div>
+
+      <div class="tool-card">
+        <span class="badge">即將推出</span>
+        <span class="tool-icon">📝</span>
+        <div class="tool-name">遊戲記錄簿</div>
+        <div class="tool-en">SESSION LOG</div>
+        <div class="tool-desc">記錄每次對局的下注、結果與籌碼變化，自動繪製資產曲線圖表。</div>
+        <div class="tool-tags"><span class="tag">記錄</span><span class="tag">曲線圖</span><span class="tag">本地儲存</span></div>
+      </div>
+
+      <div class="tool-card">
+        <span class="badge">即將推出</span>
+        <span class="tool-icon">⚖️</span>
+        <div class="tool-name">賭注策略模擬</div>
+        <div class="tool-en">BET STRATEGY SIM</div>
+        <div class="tool-desc">模擬馬丁格爾、帕羅利等經典賭注策略，觀察長期資金走勢與爆倉風險。</div>
+        <div class="tool-tags"><span class="tag">馬丁格爾</span><span class="tag">模擬</span><span class="tag">風險分析</span></div>
+      </div>
+
+      <div class="tool-card">
+        <span class="badge">即將推出</span>
+        <span class="tool-icon">🎯</span>
+        <div class="tool-name">止盈止損設定器</div>
+        <div class="tool-en">PROFIT/STOP SETTER</div>
+        <div class="tool-desc">設定每局的止盈目標與止損上限，到達條件時即時提醒，幫你守住戰果。</div>
+        <div class="tool-tags"><span class="tag">止盈</span><span class="tag">止損</span><span class="tag">提醒</span></div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    const sc=document.getElementById('stars');
+    for(let i=0;i<60;i++){
+      const s=document.createElement('div');
+      s.className='star';
+      const sz=Math.random()*2+.5;
+      s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2+Math.random()*4}s;--o:${.15+Math.random()*.5};animation-delay:${Math.random()*4}s`;
+      sc.appendChild(s);
+    }
+  </script>
+</body>
+</html>

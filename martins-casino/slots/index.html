@@ -173,7 +173,7 @@
 </div>
 
 <header class="hdr">
-  <a href="../" class="back-btn">← 賭場大廳</a>
+  <a href="../casino/" class="back-btn">← 賭場大廳</a>
   <div class="hdr-title">♠ MARTIN'S CASINO ♠</div>
   <div class="bal-block">
     <span class="bal-lbl">籌碼</span>
@@ -185,6 +185,7 @@
   <a href="../blackjack/">21 點</a>
   <a href="../baccarat/">百家樂</a>
   <a href="./" class="active">老虎機</a>
+  <a href="../gacha/">🎪 扭蛋機</a>
 </nav>
 
 <main class="wrap">
@@ -224,7 +225,7 @@
       <!-- Bet -->
       <div class="bet-row">
         <span class="bet-lbl">下注</span>
-        <input type="number" id="betInp" class="bet-inp" value="50" min="10" max="5000" step="10">
+        <input type="number" id="betInp" class="bet-inp" value="50" min="1" step="1" oninput="allInAmt=null">
       </div>
       <div class="chips">
         <button class="chip" onclick="addBet(10)">+10</button>
@@ -270,10 +271,12 @@
 
 <script>
 // ── Balance ────────────────────────────────────────────────────────────────
-let bal=(()=>{const v=+localStorage.getItem('mc_chips');return v>0?v:1000;})();
-localStorage.setItem('mc_chips',bal);
+function getCookie(k){return+((document.cookie.match('(?:^|; )'+k+'=([^;]*)')||[])[1]||0);}
+function setCookie(k,v){document.cookie=k+'='+v+';max-age=31536000;path=/';}
+let bal=(()=>{const v=getCookie('mc_chips');return v>0?v:1000;})();
+setCookie('mc_chips',bal);
 const $bal=document.getElementById('bal');
-function saveBal(){localStorage.setItem('mc_chips',bal);$bal.textContent='$'+bal.toLocaleString('en-US');}
+function saveBal(){setCookie('mc_chips',bal);$bal.textContent='$'+bal.toLocaleString('en-US');}
 saveBal();
 
 // ── Sound wrappers ─────────────────────────────────────────────────────────
@@ -339,14 +342,15 @@ let spinning=false, autoOn=false, autoTimer=null;
 let consec=0, fever=false, feverLeft=0;
 let freeSpins=0, totalSpins=0, maxWin=0, totalFS=0;
 let jackpot=JACKPOT_BASE;
+let allInAmt=null; // stores exact balance for all-in (handles astronomical numbers)
 const CELL_H=88, PRE=45;
 
 // Jackpot ticker
 setInterval(()=>{jackpot+=Math.floor(Math.random()*5+2);document.getElementById('jpDisplay').textContent='$'+jackpot.toLocaleString('en-US');},600);
 
 // ── UI helpers ─────────────────────────────────────────────────────────────
-function addBet(n){const i=document.getElementById('betInp');i.value=Math.min(5000,Math.max(10,(+i.value||0)+n));}
-function setMax(){document.getElementById('betInp').value=bal;}
+function addBet(n){allInAmt=null;const i=document.getElementById('betInp');i.value=Math.min(5000,Math.max(10,(+i.value||0)+n));}
+function setMax(){allInAmt=bal;document.getElementById('betInp').value=bal;}
 function setWin(txt,cls){const b=document.getElementById('winBar');b.textContent=txt;b.className='win-bar'+(cls?' '+cls:'');}
 function lock(v){spinning=v;document.getElementById('spinBtn').disabled=v;document.getElementById('lever').style.pointerEvents=v?'none':'auto';document.getElementById('betInp').disabled=v;}
 
@@ -400,7 +404,7 @@ let grid=[[0,0,0],[0,0,0],[0,0,0]];
 // ── Main spin ──────────────────────────────────────────────────────────────
 function spin(){
   if(spinning)return;
-  const bet=Math.floor(+document.getElementById('betInp').value)||0;
+  const bet=allInAmt!==null?(()=>{const v=allInAmt;allInAmt=null;return v;})():(Math.floor(+document.getElementById('betInp').value)||0);
   const isFree=freeSpins>0;
   if(!isFree){
     if(bet<10){setWin('最低下注 $10','');return;}
@@ -455,7 +459,7 @@ function spin(){
 
 // ── Resolve ────────────────────────────────────────────────────────────────
 function resolve(bet,wasFree){
-  const effectiveBet=wasFree?Math.floor(+document.getElementById('betInp').value)||50:bet;
+  const effectiveBet=wasFree?Math.min(Math.floor(+document.getElementById('betInp').value)||50,Math.max(10,bal)):bet;
 
   // Count scatters anywhere
   let scats=0;

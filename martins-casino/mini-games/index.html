@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini Games</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--green:#64dc9f;--green-dim:#3a8a60;--bg:#08100c;--surface:#0c1410;--text:#c5d4c8;--text-dim:#5a7a62}
+    body{background:var(--bg);background-image:radial-gradient(ellipse at top,#0e2018 0%,var(--bg) 70%);color:var(--text);font-family:'Inter','Microsoft JhengHei',sans-serif;min-height:100vh;overflow-x:hidden}
+
+    .star{position:fixed;background:#fff;border-radius:50%;animation:twinkle var(--d,3s) ease-in-out infinite;opacity:0;pointer-events:none;z-index:0}
+    @keyframes twinkle{0%,100%{opacity:0;transform:scale(.5)}50%{opacity:var(--o,.4);transform:scale(1)}}
+
+    .hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;background:rgba(8,16,12,.92);border-bottom:1px solid rgba(100,220,160,.15);position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
+    .back-btn{color:var(--green-dim);text-decoration:none;font-size:13px;font-weight:500;transition:color .2s;white-space:nowrap}
+    .back-btn:hover{color:var(--green)}
+    .hdr-title{font-family:'Playfair Display',serif;font-size:clamp(16px,3vw,22px);font-weight:900;color:var(--green);letter-spacing:3px;text-align:center;text-shadow:0 0 20px rgba(100,220,160,.3)}
+    .hdr-spacer{width:80px}
+
+    .wrap{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:52px 24px 100px}
+
+    .hero{text-align:center;margin-bottom:56px}
+    .hero h1{font-family:'Playfair Display',serif;font-size:clamp(32px,7vw,60px);font-weight:900;color:var(--green);letter-spacing:5px;text-shadow:0 0 30px rgba(100,220,160,.4);animation:glow 4s ease-in-out infinite}
+    .hero p{font-size:12px;color:var(--text-dim);letter-spacing:4px;margin-top:8px}
+    .divider{width:100px;height:1px;background:linear-gradient(90deg,transparent,var(--green-dim),transparent);margin:18px auto 0}
+    @keyframes glow{0%,100%{text-shadow:0 0 30px rgba(100,220,160,.4)}50%{text-shadow:0 0 55px rgba(100,220,160,.7),0 0 90px rgba(100,220,160,.2)}}
+
+    .game-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px}
+
+    .game-card{position:relative;background:var(--surface);border:1px solid rgba(100,220,160,.15);border-radius:22px;padding:32px 26px 44px;text-decoration:none;color:inherit;transition:transform .3s,box-shadow .3s,border-color .3s;overflow:hidden;display:block}
+    .game-card::before{content:'';position:absolute;inset:0;border-radius:22px;background:linear-gradient(135deg,rgba(100,220,160,.06) 0%,transparent 60%);opacity:0;transition:opacity .3s}
+    .game-card:hover{transform:translateY(-8px) scale(1.02);border-color:rgba(100,220,160,.5);box-shadow:0 24px 60px rgba(0,0,0,.5),0 0 40px rgba(100,220,160,.12)}
+    .game-card:hover::before{opacity:1}
+    .game-card.coming-soon{cursor:default;opacity:.5;pointer-events:none}
+
+    .game-icon{font-size:48px;margin-bottom:14px;display:block;filter:drop-shadow(0 4px 12px rgba(0,0,0,.5))}
+    .game-name{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--green);margin-bottom:3px}
+    .game-en{font-size:10px;color:var(--text-dim);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px}
+    .game-desc{font-size:13px;color:var(--text-dim);line-height:1.65;margin-bottom:16px}
+    .game-tags{display:flex;flex-wrap:wrap;gap:6px}
+    .tag{font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(100,220,160,.08);color:var(--green-dim);border:1px solid rgba(100,220,160,.2)}
+    .tag.soon{background:rgba(120,120,180,.1);color:#7a7ab8;border-color:rgba(120,120,180,.25)}
+
+    .enter-hint{position:absolute;bottom:18px;right:22px;font-size:13px;color:var(--green-dim);opacity:0;transform:translateX(-8px);transition:opacity .3s,transform .3s}
+    .game-card:hover .enter-hint{opacity:1;transform:translateX(0)}
+
+    .badge{position:absolute;top:16px;right:18px;font-size:10px;padding:3px 9px;border-radius:20px;letter-spacing:1px;font-weight:600}
+    .badge-new{background:rgba(100,220,160,.15);color:var(--green);border:1px solid rgba(100,220,160,.3)}
+    .badge-soon{background:rgba(120,120,180,.12);color:#8c8ccf;border:1px solid rgba(120,120,180,.25)}
+  </style>
+</head>
+<body>
+  <div id="stars"></div>
+
+  <header class="hdr">
+    <a href="../" class="back-btn">← 主選單</a>
+    <div class="hdr-title">👾 MINI GAMES</div>
+    <div class="hdr-spacer"></div>
+  </header>
+
+  <main class="wrap">
+    <div class="hero">
+      <h1>MINI GAMES</h1>
+      <p>輕鬆一玩 · CASUAL FUN</p>
+      <div class="divider"></div>
+    </div>
+
+    <div class="game-grid">
+
+      <a href="#" class="game-card coming-soon">
+        <span class="badge badge-soon">即將推出</span>
+        <span class="game-icon">🔴</span>
+        <div class="game-name">打磚塊</div>
+        <div class="game-en">BREAKOUT</div>
+        <div class="game-desc">操控球拍反彈球，消滅所有磚塊過關。隨關卡提升速度與挑戰度！</div>
+        <div class="game-tags"><span class="tag soon">反射</span><span class="tag soon">闖關</span><span class="tag soon">高分挑戰</span></div>
+      </a>
+
+      <a href="#" class="game-card coming-soon">
+        <span class="badge badge-soon">即將推出</span>
+        <span class="game-icon">🐍</span>
+        <div class="game-name">貪食蛇</div>
+        <div class="game-en">SNAKE</div>
+        <div class="game-desc">引導蛇吃食物讓身體越來越長，別撞到自己或牆壁！越長越難操控。</div>
+        <div class="game-tags"><span class="tag soon">方向鍵</span><span class="tag soon">越長越難</span><span class="tag soon">經典</span></div>
+      </a>
+
+      <a href="#" class="game-card coming-soon">
+        <span class="badge badge-soon">即將推出</span>
+        <span class="game-icon">💣</span>
+        <div class="game-name">掃地雷</div>
+        <div class="game-en">MINESWEEPER</div>
+        <div class="game-desc">利用數字線索找出所有地雷位置，一步踩錯全盤皆輸，考驗邏輯推理！</div>
+        <div class="game-tags"><span class="tag soon">邏輯</span><span class="tag soon">推理</span><span class="tag soon">難度可調</span></div>
+      </a>
+
+      <a href="#" class="game-card coming-soon">
+        <span class="badge badge-soon">即將推出</span>
+        <span class="game-icon">🧩</span>
+        <div class="game-name">數字推盤</div>
+        <div class="game-en">SLIDING PUZZLE</div>
+        <div class="game-desc">在 4×4 的格盤中滑動數字磁磚，從打亂狀態還原成 1–15 的順序！</div>
+        <div class="game-tags"><span class="tag soon">益智</span><span class="tag soon">滑動</span><span class="tag soon">步數最少</span></div>
+      </a>
+
+      <a href="#" class="game-card coming-soon">
+        <span class="badge badge-soon">即將推出</span>
+        <span class="game-icon">🪄</span>
+        <div class="game-name">魔法消消樂</div>
+        <div class="game-en">MAGIC MATCH</div>
+        <div class="game-desc">交換相鄰符文讓三個以上連成一線消除，觸發連鎖爆炸獲得更高分數！</div>
+        <div class="game-tags"><span class="tag soon">消除</span><span class="tag soon">連鎖</span><span class="tag soon">限時模式</span></div>
+      </a>
+
+      <a href="#" class="game-card coming-soon">
+        <span class="badge badge-soon">即將推出</span>
+        <span class="game-icon">🎯</span>
+        <div class="game-name">射擊訓練</div>
+        <div class="game-en">TARGET RANGE</div>
+        <div class="game-desc">隨機彈出的靶子等你點擊，時間越短、靶越小分數越高，測試你的反應力！</div>
+        <div class="game-tags"><span class="tag soon">反應力</span><span class="tag soon">計時</span><span class="tag soon">排行榜</span></div>
+      </a>
+
+    </div>
+  </main>
+
+  <script>
+    const sc=document.getElementById('stars');
+    for(let i=0;i<60;i++){
+      const s=document.createElement('div');
+      s.className='star';
+      const sz=Math.random()*2+.5;
+      s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2+Math.random()*4}s;--o:${.15+Math.random()*.5};animation-delay:${Math.random()*4}s`;
+      sc.appendChild(s);
+    }
+  </script>
+</body>
+</html>

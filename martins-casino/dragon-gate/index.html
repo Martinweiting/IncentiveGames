@@ -776,6 +776,177 @@
       padding: 24px;
     }
 
+    /* ── PAIR / GHOST gate labels ── */
+    .gate-info.pair  { color: var(--gold); }
+    .gate-info.ghost { color: #ce93d8; }
+
+    /* ── ONE-HOLE BADGE ── */
+    .one-hole-badge {
+      background: rgba(255,215,0,0.1);
+      border: 1px solid rgba(255,215,0,0.3);
+      border-radius: 10px;
+      padding: 7px 16px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gold);
+      margin: 8px 0 4px;
+      letter-spacing: 0.3px;
+      animation: badgePulse 2s ease-in-out infinite;
+    }
+    .one-hole-badge strong { color: #fff; }
+    @keyframes badgePulse {
+      0%,100% { box-shadow: 0 0 8px rgba(255,215,0,0.1); }
+      50%     { box-shadow: 0 0 22px rgba(255,215,0,0.4); }
+    }
+
+    /* ── GHOST CARD AREA ── */
+    .ghost-area {
+      text-align: center;
+      padding: 4px 0 8px;
+    }
+    .ghost-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      font-weight: 900;
+      color: #ce93d8;
+      letter-spacing: 5px;
+      margin-bottom: 3px;
+      text-shadow: 0 0 20px rgba(171,71,188,0.5);
+    }
+    .ghost-subtitle {
+      font-size: 12px;
+      color: var(--text-dim);
+      letter-spacing: 0.4px;
+      margin-bottom: 12px;
+    }
+    .ghost-cards-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* Ghost card slot */
+    .ghost-slot {
+      width: 80px;
+      height: 116px;
+      perspective: 700px;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    .ghost-slot:hover:not(.disabled) { transform: translateY(-6px) scale(1.04); }
+    .ghost-slot.picked { outline: 2px solid var(--gold); border-radius: 10px; }
+    .ghost-slot.disabled { cursor: default; }
+
+    .ghost-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.6s cubic-bezier(0.4,0.2,0.2,1);
+    }
+    .ghost-inner.flipped { transform: rotateY(180deg); }
+
+    .ghost-card-back, .ghost-card-face {
+      position: absolute;
+      inset: 0;
+      border-radius: 10px;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    .ghost-card-back {
+      background: linear-gradient(145deg, #3b1066, #6a1b9a 50%, #3b1066);
+      border: 2px solid rgba(171,71,188,0.5);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ghost-back-pattern {
+      width: 72%;
+      height: 74%;
+      border: 1.5px solid rgba(171,71,188,0.35);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+    .ghost-card-face {
+      transform: rotateY(180deg);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+      background: var(--white);
+      border: 1.5px solid rgba(180,180,180,0.3);
+      display: grid;
+      grid-template-rows: 1fr auto 1fr;
+      padding: 7px 8px;
+      overflow: hidden;
+    }
+    .ghost-card-face.red   { color: #c62828; }
+    .ghost-card-face.black { color: #1a1a1a; }
+    .ghost-card-face.is-ghost {
+      background: linear-gradient(145deg, #1a0a2e, #2d1050);
+      border-color: rgba(171,71,188,0.45);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      grid-template-rows: none;
+      padding: 0;
+    }
+    .ghost-label {
+      font-size: 11px;
+      color: #ce93d8;
+      letter-spacing: 1px;
+      font-weight: 700;
+    }
+
+    /* ── SUPER-PONG BANNER ── */
+    .result-banner.type-super-pong { border-color: #ff1744; box-shadow: 0 0 60px rgba(255,23,68,0.4); }
+    .result-main.super-pong { color: #ff5252; }
+
+    /* ── PAIR GUESS BUTTONS ── */
+    .btn-guess-big, .btn-guess-small {
+      padding: 13px 32px;
+      border-radius: 50px;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+      font-family: 'Inter', sans-serif;
+    }
+    .btn-guess-big {
+      background: linear-gradient(145deg, #1565c0, #0d47a1);
+      color: #e3f2fd;
+      border: 2px solid rgba(66,165,245,0.4);
+      box-shadow: 0 4px 20px rgba(13,71,161,0.4);
+    }
+    .btn-guess-big:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(66,165,245,0.5);
+    }
+    .btn-guess-small {
+      background: linear-gradient(145deg, #b71c1c, #7f0000);
+      color: #ffebee;
+      border: 2px solid rgba(229,57,53,0.4);
+      box-shadow: 0 4px 20px rgba(183,28,28,0.4);
+    }
+    .btn-guess-small:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(229,57,53,0.5);
+    }
+    .btn-guess-big:disabled, .btn-guess-small:disabled {
+      opacity: 0.4; cursor: not-allowed; transform: none !important;
+    }
+
+    /* hist super-pong */
+    .hist-item.super-pong  { border-color: #ff1744; }
+    .hist-result.super-pong { color: #ff1744; }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 500px) {
       .casino-header { padding: 12px 16px; }
@@ -794,11 +965,13 @@
 
   <!-- Header -->
   <header class="casino-header">
-    <a href="../" class="back-btn">← 大廳</a>
+    <a href="../casino/" class="back-btn">← 賭場大廳</a>
     <nav class="gnav">
       <a href="./" class="active">射龍門</a>
       <a href="../blackjack/">21 點</a>
       <a href="../baccarat/">百家樂</a>
+      <a href="../slots/">老虎機</a>
+      <a href="../gacha/">🎪 扭蛋機</a>
     </nav>
     <div class="balance-block">
       <span class="balance-label">籌碼</span>
@@ -829,8 +1002,16 @@
         <div class="rule-text"><strong>碰柱（碰）</strong>：第三張牌點數與任意一張邊界牌相同，輸掉<strong>雙倍</strong>下注！</div>
       </div>
       <div class="rule-item">
-        <span class="rule-icon">🚫</span>
-        <div class="rule-text">若兩張邊界牌<strong>相同或相鄰</strong>，龍門關閉，無法下注，只能重新發牌。</div>
+        <span class="rule-icon">⚡</span>
+        <div class="rule-text"><strong>一個洞</strong>：若兩張邊界牌中間只剩一張牌（如 7 與 9，中間只有 8），射中該牌獎勵<strong>三倍</strong>！</div>
+      </div>
+      <div class="rule-item">
+        <span class="rule-icon">🎲</span>
+        <div class="rule-text"><strong>對對 · 必玩</strong>：若兩張邊界牌<strong>點數相同</strong>，改為猜大猜小！猜中贏得下注；若第三張也相同則為<strong>超級撞柱，賠三倍</strong>。</div>
+      </div>
+      <div class="rule-item">
+        <span class="rule-icon">👻</span>
+        <div class="rule-text"><strong>連續牌 · 抽鬼牌</strong>：若兩張邊界牌<strong>相鄰</strong>（如 7 與 8），進入抽鬼牌模式！發四張牌（含兩張鬼牌、兩張數字牌）任選一張，抽到數字牌即射門成功，抽到鬼牌則失敗。</div>
       </div>
 
       <table class="rule-table">
@@ -845,7 +1026,9 @@
           <tr><td>3 ───── 9</td><td>6</td><td style="color:var(--gold)">勝 +下注</td></tr>
           <tr><td>3 ───── 9</td><td>J</td><td style="color:var(--red)">敗 -下注</td></tr>
           <tr><td>3 ───── 9</td><td>3</td><td style="color:#ff5252">碰！-雙倍</td></tr>
-          <tr><td>7 ─── 8</td><td>任意</td><td style="color:var(--text-dim)">龍門關閉</td></tr>
+          <tr><td>7 ─── 9</td><td>8（唯一中間牌）</td><td style="color:var(--gold)">勝 +三倍</td></tr>
+          <tr><td>6 ═══ 6</td><td>任意（猜大小）</td><td style="color:var(--gold)">猜中勝 / 同點超碰-三倍</td></tr>
+          <tr><td>7 ─ 8</td><td>（抽鬼牌 2鬼2數 四選一）</td><td style="color:#ce93d8">數字牌勝 / 鬼牌敗</td></tr>
         </tbody>
       </table>
 
@@ -914,6 +1097,16 @@
 
       </div>
 
+      <!-- One-hole bonus badge -->
+      <div id="one-hole-badge" style="display:none" class="one-hole-badge">⚡ 一個洞！若射中中間那張牌，獎勵 <strong>三倍</strong>！</div>
+
+      <!-- Ghost card selection area -->
+      <div id="ghost-area" style="display:none" class="ghost-area">
+        <div class="ghost-title">👻 抽　鬼　牌</div>
+        <div class="ghost-subtitle">四張選一張 · 兩鬼兩數字 · 抽到數字牌即射門成功</div>
+        <div class="ghost-cards-row" id="ghost-cards-row"></div>
+      </div>
+
       <!-- Status -->
       <div class="status-msg" id="status-msg">按「發牌」開始遊戲</div>
 
@@ -939,6 +1132,12 @@
       <div class="action-row">
         <button class="btn-deal" id="btn-deal" onclick="dealCards()">🃏 發　牌</button>
         <button class="btn-shoot" id="btn-shoot" onclick="shoot()" disabled>🎯 射　門！</button>
+      </div>
+
+      <!-- Pair mode: guess big / small -->
+      <div class="action-row" id="guess-row" style="display:none">
+        <button class="btn-guess-big"   id="btn-big"   onclick="shootGuess('big')"   disabled>▲ 猜　大</button>
+        <button class="btn-guess-small" id="btn-small" onclick="shootGuess('small')" disabled>▼ 猜　小</button>
       </div>
 
       <!-- Stats -->
@@ -988,12 +1187,17 @@ const RED_S  = new Set(['♥','♦']);
 /* ═══════════════════════════════════
    STATE
 ═══════════════════════════════════ */
-let balance=(()=>{const v=+localStorage.getItem('mc_chips');return(v>0)?v:1000;})();localStorage.setItem('mc_chips',balance);
+function getCookie(k){return+((document.cookie.match('(?:^|; )'+k+'=([^;]*)')||[])[1]||0);}
+function setCookie(k,v){document.cookie=k+'='+v+';max-age=31536000;path=/';}
+let balance=(()=>{const v=getCookie('mc_chips');return v>0?v:1000;})();setCookie('mc_chips',balance);
 let deck     = [];
-let state    = 'idle';  // idle | dealt | shooting | result
+let state    = 'idle';  // idle | dealt | pair-dealt | ghost-mode | shooting | result
 let leftCard, rightCard, thirdCard;
 let stats    = { wins:0, losses:0, pongs:0, rounds:0 };
 let history  = [];
+let guessDir  = null;   // 'big' | 'small' for pair mode
+let ghostCards   = [];  // 4 drawn cards for ghost mode
+let ghostIndices = [];  // which 2 indices are ghost cards
 
 /* ═══════════════════════════════════
    DECK HELPERS
@@ -1062,7 +1266,7 @@ function setChips(enabled) {
 function updateBalance(delta) {
   balance += delta;
   if (balance < 0) balance = 0;
-  localStorage.setItem('mc_chips', balance);
+  setCookie('mc_chips',balance);
   const el = $('balance-display');
   el.textContent = fmt(balance);
   el.classList.remove('flash-up', 'flash-down');
@@ -1086,12 +1290,13 @@ function updateStats() {
 function showBanner(type, mainTxt, subTxt) {
   const b = $('result-banner');
   b.className = 'result-banner type-' + type;
-  $('result-main-text').className = 'result-main ' + type;
+  const mainCls = (type === 'super-pong') ? 'pong' : type;
+  $('result-main-text').className  = 'result-main ' + mainCls;
   $('result-main-text').textContent = mainTxt;
-  $('result-sub-text').className  = 'result-sub ' + (type === 'win' ? 'positive' : 'negative');
-  $('result-sub-text').textContent = subTxt;
+  $('result-sub-text').className   = 'result-sub ' + (type === 'win' ? 'positive' : 'negative');
+  $('result-sub-text').textContent  = subTxt;
   b.classList.add('show');
-  setTimeout(() => b.classList.remove('show'), 2200);
+  setTimeout(() => b.classList.remove('show'), 2400);
 }
 
 /* ═══════════════════════════════════
@@ -1106,20 +1311,26 @@ function showGate(l, r) {
   const info = $('gate-info');
   wrap.classList.add('visible');
 
-  if (gap <= 0) {
-    if (lo === hi) { info.textContent = '對對 · 龍門關閉'; }
-    else           { info.textContent = '緊貼 · 龍門關閉'; }
-    info.className = 'gate-info closed';
+  if (lo === hi) {
+    // Pair — must play, guess big/small
+    info.textContent = '對對 · 必玩 — 猜大或猜小';
+    info.className   = 'gate-info pair';
+    return 'pair';
+  } else if (gap <= 0) {
+    // Consecutive — ghost card mode
+    info.textContent = '緊貼 · 抽鬼牌！四選一';
+    info.className   = 'gate-info ghost';
+    return 'ghost';
   } else {
     const label =
-      gap === 1 ? `1張 — 極難` :
+      gap === 1 ? `1張 — ⚡ 一個洞！三倍獎勵` :
       gap <= 3  ? `${gap}張 — 較難` :
       gap <= 6  ? `${gap}張 — 中等` :
                   `${gap}張 — 易射`;
     info.textContent = label;
-    info.className = 'gate-info open';
+    info.className   = 'gate-info open';
+    return gap;
   }
-  return gap;
 }
 
 /* ═══════════════════════════════════
@@ -1132,10 +1343,16 @@ function dealCards() {
   resetCardInner('inner-left');
   resetCardInner('inner-right');
   resetCardInner('inner-third');
-  $('slot-third').style.visibility = 'hidden';
+  $('slot-third').style.visibility  = 'hidden';
   $('gate-wrap').classList.remove('visible');
   $('result-banner').classList.remove('show');
-  $('bet-input').value = 0;
+  $('bet-input').value               = 0;
+  $('one-hole-badge').style.display  = 'none';
+  $('ghost-area').style.display      = 'none';
+  $('guess-row').style.display       = 'none';
+  $('btn-shoot').style.display       = '';
+  $('btn-shoot').disabled            = true;
+  ghostCards = []; ghostIndices = [];
 
   // Disable actions
   state = 'dealing';
@@ -1163,15 +1380,32 @@ function dealCards() {
 
   // After cards face up → show gate
   setTimeout(() => {
-    const gap = showGate(leftCard, rightCard);
+    const gapResult = showGate(leftCard, rightCard);
 
-    if (gap <= 0) {
-      setStatus('龍門關閉，請重新發牌。');
-      state = 'idle';
-      $('btn-deal').disabled = false;
-      setChips(false);
+    if (gapResult === 'pair') {
+      setStatus('兩張相同！猜下一張牌更大還是更小？（開出相同點數 = 超級撞柱，賠三倍）');
+      state = 'pair-dealt';
+      $('btn-deal').disabled  = false;
+      $('btn-shoot').style.display = 'none';
+      $('guess-row').style.display = 'flex';
+      $('btn-big').disabled   = false;
+      $('btn-small').disabled = false;
+      setChips(true);
+    } else if (gapResult === 'ghost') {
+      setStatus('連續牌！抽鬼牌模式 — 下注後點選一張牌，抽到數字牌即射門成功！');
+      state = 'ghost-mode';
+      $('btn-deal').disabled  = false;
+      $('btn-shoot').style.display = 'none';
+      $('ghost-area').style.display = 'block';
+      setupGhostCards();
+      setChips(true);
     } else {
-      setStatus('選擇籌碼並下注，然後按「射門！」');
+      if (gapResult === 1) {
+        $('one-hole-badge').style.display = 'block';
+        setStatus('一個洞！若射中中間那張牌，獎勵三倍！');
+      } else {
+        setStatus('選擇籌碼並下注，然後按「射門！」');
+      }
       state = 'dealt';
       $('btn-deal').disabled  = false;
       $('btn-shoot').disabled = false;
@@ -1217,6 +1451,7 @@ function shoot() {
 function resolve(bet) {
   const lo    = Math.min(leftCard.n, rightCard.n);
   const hi    = Math.max(leftCard.n, rightCard.n);
+  const gap   = hi - lo - 1;
   const t     = thirdCard.n;
   const isHit = (t === leftCard.n || t === rightCard.n);
   const isIn  = (t > lo && t < hi);
@@ -1228,7 +1463,7 @@ function resolve(bet) {
     payout  = -bet * 2;
   } else if (isIn) {
     type    = 'win';
-    payout  = bet;
+    payout  = gap === 1 ? bet * 3 : bet;  // 3× for one-hole
   } else {
     type    = 'lose';
     payout  = -bet;
@@ -1253,7 +1488,8 @@ function resolve(bet) {
   else Snd.lose();
 
   // Banner
-  if (type === 'win')  showBanner('win',  '🎉 射門成功！',  '+' + fmt(payout));
+  const gap2 = Math.max(leftCard.n, rightCard.n) - Math.min(leftCard.n, rightCard.n) - 1;
+  if (type === 'win')  showBanner('win', gap2 === 1 ? '⚡ 一個洞！三倍大獎！' : '🎉 射門成功！', '+' + fmt(payout));
   else if (type === 'pong') showBanner('pong', '💥 碰柱！雙倍扣除', fmt(payout));
   else showBanner('lose', '❌ 射門失敗',  fmt(payout));
 
@@ -1282,17 +1518,205 @@ function resolve(bet) {
 }
 
 /* ═══════════════════════════════════
+   PAIR MODE — GUESS BIG / SMALL
+═══════════════════════════════════ */
+function shootGuess(dir) {
+  if (state !== 'pair-dealt') return;
+  const bet = parseInt($('bet-input').value) || 0;
+  if (bet <= 0)      { setStatus('請先選擇下注金額！'); $('bet-input').focus(); return; }
+  if (bet > balance) { setStatus('下注金額超過現有籌碼！'); return; }
+
+  guessDir = dir;
+  state = 'shooting';
+  $('btn-deal').disabled  = true;
+  $('btn-big').disabled   = true;
+  $('btn-small').disabled = true;
+  setChips(false);
+
+  thirdCard = draw();
+  renderCardFace($('face-third'), thirdCard);
+  const slot3 = $('slot-third');
+  slot3.style.visibility = 'visible';
+  Snd.deal();
+  triggerAnim('slot-third', 'anim-from-top');
+  setTimeout(() => Snd.flip(), 280);
+  flipCard('inner-third', 280);
+
+  setTimeout(() => resolvePair(bet), 980);
+}
+
+function resolvePair(bet) {
+  const pairVal = leftCard.n;
+  const t = thirdCard.n;
+
+  let type, payout;
+  if (t === pairVal) {
+    type   = 'super-pong';
+    payout = -bet * 3;
+  } else if ((guessDir === 'big' && t > pairVal) || (guessDir === 'small' && t < pairVal)) {
+    type   = 'win';
+    payout = bet;
+  } else {
+    type   = 'lose';
+    payout = -bet;
+  }
+
+  updateBalance(payout);
+  stats.rounds++;
+  if (type === 'win')         stats.wins++;
+  else if (type === 'super-pong') stats.pongs++;
+  else                        stats.losses++;
+  updateStats();
+
+  history.unshift({ lc: leftCard, rc: rightCard, tc: thirdCard, bet, type, payout, bal: balance, isPair: true });
+  if (history.length > 12) history.pop();
+  renderHistory();
+
+  if (type === 'win')
+    { Snd.win();  showBanner('win', '🎉 猜對了！射門成功！', '+' + fmt(payout)); }
+  else if (type === 'super-pong')
+    { Snd.pong(); showBanner('super-pong', '💥 超級撞柱！三倍扣除！', fmt(payout)); }
+  else
+    { Snd.lose(); showBanner('lose', '❌ 猜錯了！射門失敗', fmt(payout)); }
+
+  const tbl = $('card-table');
+  tbl.classList.remove('anim-win','anim-lose');
+  void tbl.offsetWidth;
+  tbl.classList.add(type === 'win' ? 'anim-win' : 'anim-lose');
+
+  $('guess-row').style.display = 'none';
+  $('btn-shoot').style.display = '';
+  state = 'result';
+
+  setTimeout(() => {
+    if (balance <= 0) {
+      setStatus('籌碼已用完！');
+      if (confirm('籌碼不足！是否補充 $1,000 繼續遊戲？')) {
+        balance = 0; updateBalance(1000);
+        setStatus('已補充籌碼，按「發牌」繼續。');
+      }
+    } else {
+      setStatus('按「發牌」開始下一局');
+    }
+    $('btn-deal').disabled = false;
+    state = 'idle';
+  }, 1600);
+}
+
+/* ═══════════════════════════════════
+   GHOST CARD MODE
+═══════════════════════════════════ */
+function setupGhostCards() {
+  ghostCards = [draw(), draw(), draw(), draw()];
+  // Randomly pick 2 of the 4 positions as ghost cards
+  const positions = [0, 1, 2, 3];
+  for (let i = positions.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [positions[i], positions[j]] = [positions[j], positions[i]];
+  }
+  ghostIndices = [positions[0], positions[1]];
+  renderGhostCards();
+}
+
+function renderGhostCards() {
+  const row = $('ghost-cards-row');
+  row.innerHTML = ghostCards.map((card, i) => {
+    const isGhost = ghostIndices.includes(i);
+    const isRed   = RED_S.has(card.s);
+    const faceContent = isGhost
+      ? `<span style="font-size:36px">👻</span><span class="ghost-label">鬼牌</span>`
+      : `<div class="corner-top"><span class="c-val">${card.v}</span><span class="c-suit-sm">${card.s}</span></div>
+         <div class="card-center"><span class="c-suit-lg">${card.s}</span></div>
+         <div class="corner-bottom"><span class="c-val">${card.v}</span><span class="c-suit-sm">${card.s}</span></div>`;
+    return `
+      <div class="ghost-slot" id="ghost-slot-${i}" onclick="ghostPick(${i})">
+        <div class="ghost-inner" id="ghost-inner-${i}">
+          <div class="ghost-card-back"><div class="ghost-back-pattern">✦</div></div>
+          <div class="ghost-card-face${isGhost ? ' is-ghost' : (isRed ? ' red' : ' black')}">${faceContent}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function ghostPick(idx) {
+  if (state !== 'ghost-mode') return;
+  const bet = parseInt($('bet-input').value) || 0;
+  if (bet <= 0)      { setStatus('請先選擇下注金額！'); $('bet-input').focus(); return; }
+  if (bet > balance) { setStatus('下注金額超過現有籌碼！'); return; }
+
+  state = 'shooting';
+  $('btn-deal').disabled = true;
+  setChips(false);
+  document.querySelectorAll('.ghost-slot').forEach(s => s.classList.add('disabled'));
+  $(`ghost-slot-${idx}`).classList.add('picked');
+
+  // Flip all four cards in sequence
+  for (let i = 0; i < 4; i++) {
+    setTimeout(() => {
+      $(`ghost-inner-${i}`).classList.add('flipped');
+      Snd.flip();
+    }, 300 + i * 130);
+  }
+
+  setTimeout(() => resolveGhost(idx, bet), 300 + 4 * 130 + 650);
+}
+
+function resolveGhost(idx, bet) {
+  const isGhostPicked = ghostIndices.includes(idx);
+  const type   = isGhostPicked ? 'lose' : 'win';
+  const payout = isGhostPicked ? -bet : bet;
+
+  updateBalance(payout);
+  stats.rounds++;
+  if (type === 'win') stats.wins++;
+  else                stats.losses++;
+  updateStats();
+
+  history.unshift({ lc: leftCard, rc: rightCard, tc: ghostCards[idx], bet, type, payout, bal: balance, isGhost: true, ghostPicked: isGhostPicked });
+  if (history.length > 12) history.pop();
+  renderHistory();
+
+  if (type === 'win') { Snd.win();  showBanner('win',  '🎉 數字牌！射門成功！', '+' + fmt(payout)); }
+  else                { Snd.lose(); showBanner('lose', '👻 抽到鬼牌！射門失敗', fmt(payout)); }
+
+  const tbl = $('card-table');
+  tbl.classList.remove('anim-win','anim-lose');
+  void tbl.offsetWidth;
+  tbl.classList.add(type === 'win' ? 'anim-win' : 'anim-lose');
+
+  state = 'result';
+  setTimeout(() => {
+    $('ghost-area').style.display = 'none';
+    $('btn-shoot').style.display  = '';
+    if (balance <= 0) {
+      setStatus('籌碼已用完！');
+      if (confirm('籌碼不足！是否補充 $1,000 繼續遊戲？')) {
+        balance = 0; updateBalance(1000);
+        setStatus('已補充籌碼，按「發牌」繼續。');
+      }
+    } else {
+      setStatus('按「發牌」開始下一局');
+    }
+    $('btn-deal').disabled = false;
+    state = 'idle';
+  }, 1800);
+}
+
+/* ═══════════════════════════════════
    BET CONTROLS
 ═══════════════════════════════════ */
 function addBet(amt) {
-  if (state !== 'dealt') return;
+  if (state !== 'dealt' && state !== 'pair-dealt' && state !== 'ghost-mode') return;
   Snd.chip();
   const cur = parseInt($('bet-input').value) || 0;
   $('bet-input').value = Math.min(cur + amt, balance);
 }
 
 function clearBet()  { $('bet-input').value = 0; }
-function betAllIn()  { if (state !== 'dealt') return; $('bet-input').value = balance; }
+function betAllIn()  {
+  if (state !== 'dealt' && state !== 'pair-dealt' && state !== 'ghost-mode') return;
+  $('bet-input').value = balance;
+}
 
 /* ═══════════════════════════════════
    HISTORY
@@ -1307,12 +1731,23 @@ function renderHistory() {
   if (!history.length) { list.innerHTML = '<div class="empty-hist">尚無紀錄</div>'; return; }
 
   list.innerHTML = history.map(h => {
-    const typeLabel = h.type === 'win' ? '勝' : h.type === 'pong' ? '碰' : '敗';
+    const labelMap  = { win:'勝', lose:'敗', pong:'碰', 'super-pong':'超碰' };
+    const typeLabel = labelMap[h.type] || '敗';
+    const typeClass = h.type;
     const payStr    = (h.payout >= 0 ? '+' : '') + fmt(h.payout);
+    let mid;
+    if (h.isGhost) {
+      mid = h.ghostPicked ? '👻' : cardHtml(h.tc);
+    } else {
+      mid = h.tc ? cardHtml(h.tc) : '?';
+    }
+    const cardsStr = h.isPair
+      ? `${cardHtml(h.lc)} ═ ${mid} ═ ${cardHtml(h.rc)}`
+      : `${cardHtml(h.lc)} ─ ${mid} ─ ${cardHtml(h.rc)}`;
     return `
-      <div class="hist-item ${h.type}">
-        <span class="hist-cards">${cardHtml(h.lc)} ─ ${cardHtml(h.tc)} ─ ${cardHtml(h.rc)}</span>
-        <span class="hist-result ${h.type}">${typeLabel} ${payStr}</span>
+      <div class="hist-item ${typeClass}">
+        <span class="hist-cards">${cardsStr}</span>
+        <span class="hist-result ${typeClass}">${typeLabel} ${payStr}</span>
         <span class="hist-bal">${fmt(h.bal)}</span>
       </div>
     `;
@@ -1339,6 +1774,7 @@ document.addEventListener('keydown', e => {
     e.preventDefault();
     if (state === 'idle' || state === 'result') dealCards();
     else if (state === 'dealt') shoot();
+    // pair-dealt and ghost-mode require explicit UI interaction
   }
 });
 

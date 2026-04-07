@@ -199,11 +199,13 @@
 
 <!-- HEADER -->
 <header class="hdr">
-  <a href="../" class="back-btn">← 大廳</a>
+  <a href="../casino/" class="back-btn">← 賭場大廳</a>
   <nav class="gnav">
     <a href="../dragon-gate/">射龍門</a>
     <a href="./" class="active">21 點</a>
     <a href="../baccarat/">百家樂</a>
+    <a href="../slots/">老虎機</a>
+    <a href="../gacha/">🎪 扭蛋機</a>
   </nav>
   <div class="bal-block">
     <span class="bal-lbl">籌碼</span>
@@ -300,7 +302,9 @@ function S(name){try{if(typeof Snd!=='undefined')Snd[name]();}catch(e){}}
 const $=id=>document.getElementById(id);
 
 /* ── State ── */
-let balance=(()=>{const v=+localStorage.getItem('mc_chips');return(v>0)?v:1000;})();localStorage.setItem('mc_chips',balance);
+function getCookie(k){return+((document.cookie.match('(?:^|; )'+k+'=([^;]*)')||[])[1]||0);}
+function setCookie(k,v){document.cookie=k+'='+v+';max-age=31536000;path=/';}
+let balance=(()=>{const v=getCookie('mc_chips');return v>0?v:1000;})();setCookie('mc_chips',balance);
 let deck=[],ph=[],dh=[],bet=0,phase='idle',hiddenEl=null;
 let stats={w:0,l:0,p:0,bj:0,r:0},hist=[];
 
@@ -326,7 +330,7 @@ function setStatus(m){$('smsg').textContent=m;}
 /* ── BALANCE ── */
 function updateBal(delta){
   balance+=delta; if(balance<0)balance=0;
-  localStorage.setItem('mc_chips',balance);
+  setCookie('mc_chips',balance);
   const el=$('bal');
   el.textContent=fmt(balance);
   el.classList.remove('fu','fd'); void el.offsetWidth;

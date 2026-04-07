@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>扭蛋機 — Martin's Casino</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --gold:#ffd700;--gold-dim:#b8922a;--bg:#080810;--surface:#10101c;--text:#d4c5a9;--text-dim:#7a6a5a;
+      --c-common:#8a9bb0;--c-rare:#4e9eff;--c-epic:#c47fff;--c-legendary:#ffd700;
+    }
+    body{background:var(--bg);color:var(--text);font-family:'Inter','Microsoft JhengHei',sans-serif;min-height:100vh;overflow-x:hidden}
+
+    .star{position:fixed;background:#fff;border-radius:50%;animation:twinkle var(--d,3s) ease-in-out infinite;opacity:0;pointer-events:none;z-index:0}
+    @keyframes twinkle{0%,100%{opacity:0;transform:scale(.5)}50%{opacity:var(--o,.4);transform:scale(1)}}
+
+    .hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;background:rgba(8,8,16,.92);border-bottom:1px solid rgba(255,215,0,.15);position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
+    .back-btn{color:var(--gold-dim);text-decoration:none;font-size:13px;font-weight:500;transition:color .2s}
+    .back-btn:hover{color:var(--gold)}
+    .hdr-title{font-family:'Playfair Display',serif;font-size:clamp(16px,3vw,22px);font-weight:900;color:var(--gold);letter-spacing:3px;text-shadow:0 0 20px rgba(255,215,0,.3)}
+    .bal-block{display:flex;flex-direction:column;align-items:flex-end}
+    .bal-lbl{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1.5px}
+    .bal-amt{font-size:clamp(16px,3vw,22px);font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums}
+
+    .gnav{display:flex;justify-content:center;gap:8px;padding:12px 24px;background:rgba(8,8,16,.6);border-bottom:1px solid rgba(255,255,255,.06);flex-wrap:wrap}
+    .gnav a{font-size:12px;padding:6px 18px;border-radius:20px;text-decoration:none;color:var(--text-dim);border:1px solid rgba(255,255,255,.1);transition:all .2s}
+    .gnav a:hover{color:var(--text);border-color:rgba(255,215,0,.3)}
+    .gnav a.active{color:var(--gold);border-color:rgba(255,215,0,.5);background:rgba(255,215,0,.07)}
+
+    .wrap{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:28px 16px 80px}
+
+    /* ── Machine ── */
+    .machine-card{background:linear-gradient(160deg,#1c1c32 0%,#12122a 100%);border:2px solid rgba(255,215,0,.25);border-radius:28px;padding:32px 28px;margin-bottom:28px;text-align:center;box-shadow:0 0 80px rgba(128,0,255,.08),0 40px 80px rgba(0,0,0,.7);position:relative;overflow:hidden}
+    .machine-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(200,100,255,.07) 0%,transparent 60%);pointer-events:none}
+
+    .capsule-visual{position:relative;display:inline-block;margin-bottom:12px}
+    .capsule-machine-body{font-size:80px;line-height:1;filter:drop-shadow(0 0 20px rgba(180,100,255,.5))}
+    .capsule-glow{position:absolute;inset:-10px;border-radius:50%;background:radial-gradient(circle,rgba(200,100,255,.15) 0%,transparent 70%);animation:pulseGlow 2.5s ease-in-out infinite}
+    @keyframes pulseGlow{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.15);opacity:1}}
+
+    .machine-title{font-family:'Playfair Display',serif;font-size:28px;font-weight:900;color:#c87fff;letter-spacing:4px;text-shadow:0 0 20px rgba(200,100,255,.5);margin-bottom:4px}
+    .machine-sub{font-size:10px;letter-spacing:4px;color:var(--text-dim);text-transform:uppercase;margin-bottom:20px}
+
+    .coll-progress{display:inline-flex;align-items:center;gap:12px;background:rgba(200,100,255,.08);border:1px solid rgba(200,100,255,.2);border-radius:20px;padding:7px 20px;margin-bottom:24px}
+    .coll-num{font-size:18px;font-weight:700;color:#c87fff}
+    .coll-denom{font-size:12px;color:var(--text-dim)}
+    .coll-pity{font-size:11px;color:var(--text-dim);background:rgba(255,215,0,.07);border:1px solid rgba(255,215,0,.15);border-radius:12px;padding:4px 12px;margin-left:6px}
+    .coll-pity span{color:var(--gold);font-weight:700}
+
+    .pull-options{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:8px}
+    .pull-btn{flex:1;min-width:160px;max-width:220px;padding:16px 20px;border:none;border-radius:16px;cursor:pointer;font-family:'Playfair Display',serif;font-size:16px;font-weight:700;letter-spacing:1px;transition:all .2s;position:relative;overflow:hidden}
+    .pull-btn-single{background:linear-gradient(135deg,#5540aa,#8860dd);color:#fff;box-shadow:0 6px 24px rgba(100,80,200,.35)}
+    .pull-btn-single:hover:not(:disabled){filter:brightness(1.15);transform:translateY(-2px);box-shadow:0 10px 32px rgba(100,80,200,.5)}
+    .pull-btn-ten{background:linear-gradient(135deg,#aa4080,#dd60b0);color:#fff;box-shadow:0 6px 24px rgba(200,80,140,.35)}
+    .pull-btn-ten:hover:not(:disabled){filter:brightness(1.15);transform:translateY(-2px);box-shadow:0 10px 32px rgba(200,80,140,.5)}
+    .pull-btn:disabled{opacity:.35;cursor:not-allowed;transform:none!important}
+    .pull-cost-tag{display:block;font-family:'Inter',sans-serif;font-size:12px;font-weight:400;opacity:.8;margin-top:4px}
+    .discount-tag{font-size:10px;background:rgba(255,215,0,.25);color:var(--gold);border-radius:8px;padding:1px 7px;margin-left:6px;font-weight:700;letter-spacing:0}
+
+    /* ── Rarity legend ── */
+    .rarity-legend{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+    .rleg{font-size:11px;padding:3px 12px;border-radius:12px;font-weight:600}
+    .rleg-common{background:rgba(138,155,176,.12);color:var(--c-common);border:1px solid rgba(138,155,176,.25)}
+    .rleg-rare{background:rgba(78,158,255,.1);color:var(--c-rare);border:1px solid rgba(78,158,255,.25)}
+    .rleg-epic{background:rgba(196,127,255,.1);color:var(--c-epic);border:1px solid rgba(196,127,255,.25)}
+    .rleg-legendary{background:rgba(255,215,0,.1);color:var(--c-legendary);border:1px solid rgba(255,215,0,.3)}
+
+    /* ── Result Overlay ── */
+    #resultOverlay{position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.9);backdrop-filter:blur(12px)}
+    #resultOverlay.show{display:flex}
+    .result-box{background:linear-gradient(160deg,#18182e,#0e0e22);border:1px solid rgba(200,100,255,.3);border-radius:28px;padding:32px 24px;max-width:700px;width:calc(100% - 32px);max-height:90vh;overflow-y:auto;position:relative}
+    .result-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:900;text-align:center;margin-bottom:20px;letter-spacing:2px;color:#c87fff}
+
+    .result-cards{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:24px}
+    .result-pet-card{width:120px;text-align:center;background:rgba(255,255,255,.04);border-radius:16px;padding:14px 8px;border:2px solid;position:relative;animation:popIn .4s cubic-bezier(.34,1.56,.64,1) both}
+    @keyframes popIn{from{transform:scale(.3) rotate(-8deg);opacity:0}to{transform:scale(1) rotate(0deg);opacity:1}}
+    .rpc-common{border-color:var(--c-common);box-shadow:0 0 12px rgba(138,155,176,.2)}
+    .rpc-rare{border-color:var(--c-rare);box-shadow:0 0 16px rgba(78,158,255,.3)}
+    .rpc-epic{border-color:var(--c-epic);box-shadow:0 0 20px rgba(196,127,255,.4)}
+    .rpc-legendary{border-color:var(--c-legendary);box-shadow:0 0 28px rgba(255,215,0,.5);animation:popIn .4s cubic-bezier(.34,1.56,.64,1) both,legendaryPulse 1s ease-in-out infinite .4s}
+    @keyframes legendaryPulse{0%,100%{box-shadow:0 0 28px rgba(255,215,0,.5)}50%{box-shadow:0 0 50px rgba(255,215,0,.9),0 0 80px rgba(255,215,0,.3)}}
+    .rpc-emoji{font-size:40px;line-height:1.2;margin-bottom:6px;display:block}
+    .rpc-new{position:absolute;top:-8px;right:-8px;background:#ff4b4b;color:#fff;font-size:9px;font-weight:700;border-radius:8px;padding:2px 6px;letter-spacing:.5px}
+    .rpc-name{font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;line-height:1.3}
+    .rpc-rarity{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+
+    .result-close{width:100%;padding:13px;border:none;border-radius:14px;background:linear-gradient(135deg,#5540aa,#8860dd);color:#fff;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:2px;font-family:'Playfair Display',serif;transition:all .2s}
+    .result-close:hover{filter:brightness(1.1);transform:translateY(-1px)}
+
+    /* ── Flash ── */
+    #flash{position:fixed;inset:0;pointer-events:none;z-index:200;opacity:0;transition:opacity .08s}
+    /* ── Particles ── */
+    #ptcl{position:fixed;inset:0;pointer-events:none;z-index:300;overflow:hidden}
+    .ptcl{position:absolute;border-radius:50%;animation:fly var(--d,.8s) ease-out forwards}
+    @keyframes fly{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--x,0),var(--y,-180px)) scale(0)}}
+
+    /* ── Collection ── */
+    .section-header{display:flex;align-items:center;gap:10px;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid rgba(200,100,255,.15)}
+    .section-icon{font-size:22px}
+    .section-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#c87fff;letter-spacing:2px}
+    .section-count{margin-left:auto;font-size:11px;color:var(--text-dim);border:1px solid rgba(200,100,255,.2);border-radius:16px;padding:3px 12px}
+
+    .pet-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+
+    .pet-card{background:var(--surface);border-radius:18px;padding:16px 10px 12px;text-align:center;border:2px solid;position:relative;transition:transform .25s,box-shadow .25s}
+    .pet-card.owned{cursor:pointer}
+    .pet-card.owned:hover{transform:translateY(-4px)}
+    .pet-card.unowned{opacity:.35;filter:grayscale(.7)}
+    .pet-card-common{border-color:rgba(138,155,176,.2)}
+    .pet-card-rare{border-color:rgba(78,158,255,.2)}
+    .pet-card-epic{border-color:rgba(196,127,255,.2)}
+    .pet-card-legendary{border-color:rgba(255,215,0,.25)}
+    .pet-card.owned.pet-card-common{border-color:var(--c-common);box-shadow:0 4px 16px rgba(138,155,176,.15)}
+    .pet-card.owned.pet-card-rare{border-color:var(--c-rare);box-shadow:0 4px 16px rgba(78,158,255,.2)}
+    .pet-card.owned.pet-card-epic{border-color:var(--c-epic);box-shadow:0 4px 16px rgba(196,127,255,.25)}
+    .pet-card.owned.pet-card-legendary{border-color:var(--c-legendary);box-shadow:0 4px 20px rgba(255,215,0,.3)}
+
+    .pet-emoji{font-size:38px;line-height:1.2;margin-bottom:6px;display:block}
+    .pet-name{font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;line-height:1.3;min-height:32px;display:flex;align-items:center;justify-content:center}
+    .pet-rarity-badge{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:8px;margin-bottom:8px;display:inline-block}
+    .rb-common{background:rgba(138,155,176,.12);color:var(--c-common)}
+    .rb-rare{background:rgba(78,158,255,.1);color:var(--c-rare)}
+    .rb-epic{background:rgba(196,127,255,.1);color:var(--c-epic)}
+    .rb-legendary{background:rgba(255,215,0,.1);color:var(--c-legendary)}
+
+    .pet-count-badge{position:absolute;top:8px;right:8px;background:#333;color:#aaa;font-size:9px;font-weight:700;border-radius:8px;padding:2px 6px;min-width:20px}
+    .pet-count-badge.multi{background:rgba(200,100,255,.2);color:#c87fff}
+
+    /* Stats mini bars */
+    .stat-bars{width:100%;margin-top:4px}
+    .stat-row{display:flex;align-items:center;gap:5px;margin-bottom:3px}
+    .stat-lbl{font-size:8px;color:var(--text-dim);width:22px;text-align:right;flex-shrink:0}
+    .stat-track{flex:1;height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden}
+    .stat-fill{height:100%;border-radius:2px;transition:width .5s cubic-bezier(.34,1.2,.64,1)}
+    .sf-atk{background:linear-gradient(90deg,#ff6b6b,#ff4040)}
+    .sf-def{background:linear-gradient(90deg,#6baaff,#4080ff)}
+    .sf-hp{background:linear-gradient(90deg,#6bff8a,#40dd60)}
+    .sf-spd{background:linear-gradient(90deg,#ffe06b,#ffc040)}
+    .sf-lck{background:linear-gradient(90deg,#d06bff,#b040ff)}
+    .sf-int{background:linear-gradient(90deg,#6bffee,#40d0cc)}
+
+    /* ── Detail modal ── */
+    #detailOverlay{position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.85);backdrop-filter:blur(8px)}
+    #detailOverlay.show{display:flex}
+    .detail-box{background:linear-gradient(160deg,#1a1a30,#0e0e22);border-radius:24px;padding:28px 24px;max-width:340px;width:calc(100% - 32px);border:2px solid;text-align:center;animation:popIn .3s cubic-bezier(.34,1.56,.64,1)}
+    .detail-emoji{font-size:64px;margin-bottom:8px;display:block;filter:drop-shadow(0 4px 16px rgba(0,0,0,.5))}
+    .detail-name{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-bottom:4px}
+    .detail-count{font-size:12px;color:var(--text-dim);margin-bottom:16px}
+    .detail-stats{width:100%;margin-bottom:20px}
+    .detail-stat-row{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+    .detail-stat-lbl{font-size:12px;color:var(--text-dim);width:40px;text-align:right;flex-shrink:0}
+    .detail-stat-track{flex:1;height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden}
+    .detail-stat-fill{height:100%;border-radius:4px;transition:width .6s cubic-bezier(.34,1.2,.64,1)}
+    .detail-stat-val{font-size:12px;font-weight:700;width:28px;text-align:left}
+    .detail-close{width:100%;padding:12px;border:none;border-radius:12px;background:rgba(255,255,255,.07);color:var(--text);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+    .detail-close:hover{background:rgba(255,255,255,.12)}
+  </style>
+</head>
+<body>
+<div id="stars"></div>
+<div id="ptcl"></div>
+<div id="flash"></div>
+
+<!-- Result overlay -->
+<div id="resultOverlay">
+  <div class="result-box">
+    <div class="result-title" id="resultTitle">✨ 獲得寵物！</div>
+    <div class="result-cards" id="resultCards"></div>
+    <button class="result-close" onclick="closeResult()">收下！</button>
+  </div>
+</div>
+
+<!-- Detail overlay -->
+<div id="detailOverlay">
+  <div class="detail-box" id="detailBox">
+    <span class="detail-emoji" id="detailEmoji"></span>
+    <div class="detail-name" id="detailName"></div>
+    <div class="detail-count" id="detailCount"></div>
+    <div class="detail-stats" id="detailStats"></div>
+    <button class="detail-close" onclick="closeDetail()">關閉</button>
+  </div>
+</div>
+
+<header class="hdr">
+  <a href="../casino/" class="back-btn">← 賭場大廳</a>
+  <div class="hdr-title">♠ MARTIN'S CASINO ♠</div>
+  <div class="bal-block">
+    <span class="bal-lbl">籌碼</span>
+    <span class="bal-amt" id="bal">$1,000</span>
+  </div>
+</header>
+<nav class="gnav">
+  <a href="../dragon-gate/">射龍門</a>
+  <a href="../blackjack/">21 點</a>
+  <a href="../baccarat/">百家樂</a>
+  <a href="../slots/">老虎機</a>
+  <a href="./" class="active">🎪 扭蛋機</a>
+</nav>
+
+<main class="wrap">
+
+<!-- Machine -->
+<div class="machine-card">
+  <div class="capsule-visual">
+    <div class="capsule-glow"></div>
+    <div class="capsule-machine-body">🎪</div>
+  </div>
+  <div class="machine-title">神秘扭蛋機</div>
+  <div class="machine-sub">MYSTERY CAPSULE MACHINE</div>
+
+  <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:24px">
+    <div class="coll-progress">
+      <span class="coll-num" id="ownCount">0</span>
+      <span class="coll-denom">/ 15 種寵物</span>
+    </div>
+    <div class="coll-pity">保底進度 <span id="pityCount">0</span> / 50</div>
+  </div>
+
+  <div class="pull-options">
+    <button class="pull-btn pull-btn-single" id="btnSingle" onclick="pull(1)">
+      單抽 ×1
+      <span class="pull-cost-tag">$500 / 抽</span>
+    </button>
+    <button class="pull-btn pull-btn-ten" id="btnTen" onclick="pull(10)">
+      十連 ×10 <span class="discount-tag">-10%</span>
+      <span class="pull-cost-tag">$4,500 共 10 抽</span>
+    </button>
+  </div>
+
+  <div class="rarity-legend">
+    <span class="rleg rleg-common">普通 55%</span>
+    <span class="rleg rleg-rare">稀有 28%</span>
+    <span class="rleg rleg-epic">史詩 13%</span>
+    <span class="rleg rleg-legendary">傳說 4%</span>
+  </div>
+</div>
+
+<!-- Collection -->
+<div>
+  <div class="section-header">
+    <span class="section-icon">📖</span>
+    <div class="section-title">寵物圖鑑</div>
+    <span class="section-count" id="collCount">0 / 15</span>
+  </div>
+  <div class="pet-grid" id="petGrid"></div>
+</div>
+
+</main>
+
+<script>
+// ── Balance ──────────────────────────────────────────────────────────────────
+function getCookie(k){return+((document.cookie.match('(?:^|; )'+k+'=([^;]*)')||[])[1]||0);}
+function setCookie(k,v){document.cookie=k+'='+v+';max-age=31536000;path=/';}
+let bal=(()=>{const v=getCookie('mc_chips');return v>0?v:1000;})();
+setCookie('mc_chips',bal);
+const $bal=document.getElementById('bal');
+function saveBal(){setCookie('mc_chips',bal);$bal.textContent='$'+bal.toLocaleString('en-US');}
+saveBal();
+
+// ── Stars ────────────────────────────────────────────────────────────────────
+const sc=document.getElementById('stars');
+for(let i=0;i<60;i++){const s=document.createElement('div');s.className='star';const z=Math.random()*2+.5;s.style.cssText=`width:${z}px;height:${z}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2+Math.random()*4}s;--o:${.15+Math.random()*.5};animation-delay:${Math.random()*4}s`;sc.appendChild(s);}
+
+// ── Pets Data ─────────────────────────────────────────────────────────────────
+// revealed: true = 可在圖鑑中看到名稱/圖示 (未擁有時); false = 完全隱藏直到取得
+const PETS=[
+  // ── 已公開 (3隻) ──
+  {id:1,name:'奶龍',emoji:'🐲',rarity:'legendary',revealed:true,
+   stats:{atk:65,def:40,hp:80,spd:55,lck:70,int:45}},
+  {id:2,name:'吸特樂小貓',emoji:'😼',rarity:'epic',revealed:true,
+   stats:{atk:80,def:30,hp:60,spd:75,lck:40,int:85}},
+  {id:3,name:'原始人海綿寶',emoji:'🧽',rarity:'rare',revealed:true,
+   stats:{atk:50,def:70,hp:90,spd:35,lck:60,int:30}},
+  // ── 隱藏寵物 (12隻) ──
+  {id:4,name:'暴怒蘿蔔',emoji:'🥕',rarity:'common',revealed:false,
+   stats:{atk:45,def:25,hp:55,spd:60,lck:35,int:20}},
+  {id:5,name:'冰霜獅子',emoji:'🦁',rarity:'epic',revealed:false,
+   stats:{atk:85,def:55,hp:70,spd:65,lck:50,int:60}},
+  {id:6,name:'睡魔章魚',emoji:'🐙',rarity:'rare',revealed:false,
+   stats:{atk:40,def:60,hp:75,spd:30,lck:55,int:70}},
+  {id:7,name:'電磁刺蝟',emoji:'🦔',rarity:'rare',revealed:false,
+   stats:{atk:55,def:45,hp:50,spd:80,lck:45,int:55}},
+  {id:8,name:'蜂蜜熊',emoji:'🐻',rarity:'common',revealed:false,
+   stats:{atk:35,def:50,hp:70,spd:25,lck:65,int:40}},
+  {id:9,name:'末日鸚鵡',emoji:'🦜',rarity:'epic',revealed:false,
+   stats:{atk:70,def:35,hp:55,spd:70,lck:60,int:90}},
+  {id:10,name:'宇宙企鵝',emoji:'🐧',rarity:'legendary',revealed:false,
+   stats:{atk:75,def:80,hp:95,spd:70,lck:85,int:75}},
+  {id:11,name:'武士蝸牛',emoji:'🐌',rarity:'rare',revealed:false,
+   stats:{atk:60,def:75,hp:65,spd:15,lck:40,int:50}},
+  {id:12,name:'幽靈仙人掌',emoji:'🌵',rarity:'common',revealed:false,
+   stats:{atk:30,def:40,hp:45,spd:20,lck:80,int:30}},
+  {id:13,name:'彩虹烏龜',emoji:'🐢',rarity:'rare',revealed:false,
+   stats:{atk:40,def:85,hp:80,spd:10,lck:50,int:45}},
+  {id:14,name:'沙漠狐狸',emoji:'🦊',rarity:'common',revealed:false,
+   stats:{atk:50,def:30,hp:45,spd:75,lck:55,int:60}},
+  {id:15,name:'鋼鐵螃蟹',emoji:'🦀',rarity:'epic',revealed:false,
+   stats:{atk:90,def:65,hp:60,spd:20,lck:30,int:35}},
+];
+
+const RARITY_COLOR={common:'var(--c-common)',rare:'var(--c-rare)',epic:'var(--c-epic)',legendary:'var(--c-legendary)'};
+const RARITY_NAME={common:'普通',rare:'稀有',epic:'史詩',legendary:'傳說'};
+
+// Rarity pools for pulls
+const BY_RARITY={common:[],rare:[],epic:[],legendary:[]};
+PETS.forEach(p=>BY_RARITY[p.rarity].push(p.id));
+
+// Pull weights
+const RARITY_WEIGHTS={common:55,rare:28,epic:13,legendary:4};
+
+// ── Collection (localStorage) ─────────────────────────────────────────────────
+// Stored as {[petId]: count}
+function loadColl(){try{return JSON.parse(localStorage.getItem('mc_gacha_coll')||'{}')}catch{return {};}}
+function saveColl(c){localStorage.setItem('mc_gacha_coll',JSON.stringify(c));}
+let coll=loadColl();
+
+// Pity counter (pulls without legendary)
+let pityCount=parseInt(localStorage.getItem('mc_gacha_pity')||'0')||0;
+function savePity(){localStorage.setItem('mc_gacha_pity',String(pityCount));}
+
+// ── Pull Logic ────────────────────────────────────────────────────────────────
+const COST_SINGLE=500;
+const COST_TEN=4500;
+
+function pickRarity(forceLegendary){
+  if(forceLegendary)return'legendary';
+  const r=Math.random()*100;
+  if(r<4)return'legendary';
+  if(r<17)return'epic';
+  if(r<45)return'rare';
+  return'common';
+}
+
+function pickPet(rarity){
+  const pool=BY_RARITY[rarity];
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
+function doPull(n){
+  const results=[];
+  for(let i=0;i<n;i++){
+    pityCount++;
+    const isLast=(i===n-1);
+    const forceLeg=(pityCount>=50)&&isLast;
+    const rarity=pickRarity(forceLeg);
+    if(rarity==='legendary')pityCount=0;
+    const petId=pickPet(rarity);
+    results.push(petId);
+  }
+  savePity();
+  return results;
+}
+
+function pull(n){
+  const cost=n===1?COST_SINGLE:COST_TEN;
+  if(bal<cost){
+    showMsg(n===1?`籌碼不足！需要 $${COST_SINGLE.toLocaleString()}`:`籌碼不足！十連需要 $${COST_TEN.toLocaleString()}`);
+    return;
+  }
+  bal-=cost;
+  saveBal();
+
+  const petIds=doPull(n);
+
+  // Update collection
+  const isNew={};
+  petIds.forEach(id=>{
+    if(!coll[id]){coll[id]=0;isNew[id]=true;}
+    coll[id]++;
+  });
+  saveColl(coll);
+
+  // Effects
+  const hasLeg=petIds.some(id=>PETS[id-1].rarity==='legendary');
+  const hasEpic=petIds.some(id=>PETS[id-1].rarity==='epic');
+  if(hasLeg){flash('#ffd700',0.4);burst(40,'#ffd700');burst(20,'#ff6b35');}
+  else if(hasEpic){flash('#c87fff',0.3);burst(20,'#c87fff');}
+  else if(n>=10){burst(10,'#4e9eff');}
+
+  showResult(petIds,isNew);
+  renderGrid();
+  updateCounts();
+}
+
+// ── UI ────────────────────────────────────────────────────────────────────────
+function showResult(petIds,isNew){
+  const title=document.getElementById('resultTitle');
+  const cards=document.getElementById('resultCards');
+
+  const hasLeg=petIds.some(id=>PETS[id-1].rarity==='legendary');
+  const hasEpic=petIds.some(id=>PETS[id-1].rarity==='epic');
+  if(hasLeg)title.textContent='🌟 傳說降臨！';
+  else if(hasEpic)title.textContent='💜 史詩召喚！';
+  else title.textContent='✨ 獲得寵物！';
+
+  cards.innerHTML='';
+  petIds.forEach((id,i)=>{
+    const p=PETS[id-1];
+    const d=document.createElement('div');
+    d.className=`result-pet-card rpc-${p.rarity}`;
+    d.style.animationDelay=(i*0.07)+'s';
+    d.innerHTML=`
+      ${isNew[id]?'<span class="rpc-new">NEW!</span>':''}
+      <span class="rpc-emoji">${p.emoji}</span>
+      <div class="rpc-name">${p.name}</div>
+      <div class="rpc-rarity" style="color:${RARITY_COLOR[p.rarity]}">${RARITY_NAME[p.rarity]}</div>
+    `;
+    cards.appendChild(d);
+  });
+
+  document.getElementById('resultOverlay').classList.add('show');
+}
+
+function closeResult(){document.getElementById('resultOverlay').classList.remove('show');}
+
+function showDetail(id){
+  const p=PETS[id-1];
+  const box=document.getElementById('detailBox');
+  box.style.borderColor=RARITY_COLOR[p.rarity];
+  box.style.boxShadow=`0 0 40px ${RARITY_COLOR[p.rarity]}40`;
+  document.getElementById('detailEmoji').textContent=p.emoji;
+  document.getElementById('detailName').textContent=p.name;
+  document.getElementById('detailName').style.color=RARITY_COLOR[p.rarity];
+  const cnt=coll[id]||0;
+  document.getElementById('detailCount').textContent=`持有數量: ${cnt} | ${RARITY_NAME[p.rarity]}`;
+
+  const statDefs=[
+    {key:'atk',lbl:'攻擊',cls:'sf-atk'},
+    {key:'def',lbl:'防禦',cls:'sf-def'},
+    {key:'hp', lbl:'生命',cls:'sf-hp'},
+    {key:'spd',lbl:'速度',cls:'sf-spd'},
+    {key:'lck',lbl:'幸運',cls:'sf-lck'},
+    {key:'int',lbl:'智力',cls:'sf-int'},
+  ];
+  const statsEl=document.getElementById('detailStats');
+  statsEl.innerHTML=statDefs.map(({key,lbl,cls})=>`
+    <div class="detail-stat-row">
+      <span class="detail-stat-lbl">${lbl}</span>
+      <div class="detail-stat-track"><div class="detail-stat-fill ${cls}" style="width:0%" data-val="${p.stats[key]}"></div></div>
+      <span class="detail-stat-val" style="color:${RARITY_COLOR[p.rarity]}">${p.stats[key]}</span>
+    </div>
+  `).join('');
+
+  document.getElementById('detailOverlay').classList.add('show');
+  // Animate bars
+  setTimeout(()=>{
+    statsEl.querySelectorAll('.detail-stat-fill').forEach(el=>{
+      el.style.width=el.dataset.val+'%';
+    });
+  },60);
+}
+
+function closeDetail(){document.getElementById('detailOverlay').classList.remove('show');}
+
+function showMsg(txt){
+  const el=document.createElement('div');
+  el.style.cssText='position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#1a1a30;border:1px solid rgba(255,100,100,.4);color:#ff8080;padding:10px 22px;border-radius:12px;font-size:13px;z-index:700;pointer-events:none;animation:fadeOut 2s forwards';
+  el.textContent=txt;
+  if(!document.getElementById('msgStyle')){const s=document.createElement('style');s.id='msgStyle';s.textContent='@keyframes fadeOut{0%,60%{opacity:1;top:80px}100%{opacity:0;top:60px}}';document.head.appendChild(s);}
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),2100);
+}
+
+function updateCounts(){
+  const owned=Object.keys(coll).filter(id=>coll[id]>0).length;
+  document.getElementById('ownCount').textContent=owned;
+  document.getElementById('collCount').textContent=owned+' / 15';
+  document.getElementById('pityCount').textContent=pityCount;
+  const disabledS=bal<COST_SINGLE;
+  const disabledT=bal<COST_TEN;
+  document.getElementById('btnSingle').disabled=disabledS;
+  document.getElementById('btnTen').disabled=disabledT;
+}
+
+function renderGrid(){
+  const grid=document.getElementById('petGrid');
+  grid.innerHTML='';
+  PETS.forEach(p=>{
+    const count=coll[p.id]||0;
+    const owned=count>0;
+    const showInfo=owned||p.revealed;
+
+    const card=document.createElement('div');
+    card.className=`pet-card pet-card-${p.rarity}${owned?' owned':' unowned'}`;
+    if(owned)card.onclick=()=>showDetail(p.id);
+
+    // Stats mini bars (only if owned)
+    let statHtml='';
+    if(owned&&p.stats){
+      const statDefs=[
+        {key:'atk',cls:'sf-atk'},{key:'def',cls:'sf-def'},{key:'hp',cls:'sf-hp'},
+        {key:'spd',cls:'sf-spd'},{key:'lck',cls:'sf-lck'},{key:'int',cls:'sf-int'},
+      ];
+      statHtml='<div class="stat-bars">'+statDefs.map(({key,cls})=>`
+        <div class="stat-row">
+          <span class="stat-lbl">${key.toUpperCase()}</span>
+          <div class="stat-track"><div class="stat-fill ${cls}" style="width:${p.stats[key]}%"></div></div>
+        </div>
+      `).join('')+'</div>';
+    }
+
+    card.innerHTML=`
+      ${count>1?`<span class="pet-count-badge multi">×${count}</span>`:owned?`<span class="pet-count-badge">×1</span>`:''}
+      <span class="pet-emoji">${showInfo?p.emoji:'❓'}</span>
+      <div class="pet-name">${showInfo?p.name:'???'}</div>
+      <span class="pet-rarity-badge rb-${p.rarity}">${showInfo?RARITY_NAME[p.rarity]:'隱藏'}</span>
+      ${statHtml}
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// ── Effects ──────────────────────────────────────────────────────────────────
+function flash(color,op){
+  const el=document.getElementById('flash');
+  el.style.background=color;el.style.opacity=op;
+  setTimeout(()=>el.style.opacity=0,140);
+}
+function burst(n,color){
+  const box=document.getElementById('ptcl');
+  const cx=window.innerWidth/2,cy=window.innerHeight*0.35;
+  for(let i=0;i<n;i++){
+    const p=document.createElement('div');p.className='ptcl';
+    const sz=3+Math.random()*9,ang=Math.random()*Math.PI*2,dist=80+Math.random()*220,dur=.55+Math.random()*.7;
+    p.style.cssText=`width:${sz}px;height:${sz}px;background:${color};left:${cx+(Math.random()*60-30)}px;top:${cy+(Math.random()*30-15)}px;--x:${Math.cos(ang)*dist}px;--y:${Math.sin(ang)*dist-120}px;--d:${dur}s;animation-delay:${Math.random()*.15}s`;
+    box.appendChild(p);setTimeout(()=>p.remove(),(dur+.2)*1000);
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+renderGrid();
+updateCounts();
+</script>
+</body>
+</html>
