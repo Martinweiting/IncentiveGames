@@ -104,9 +104,16 @@
     .spin-btn{width:100%;padding:15px;border:none;border-radius:14px;background:linear-gradient(135deg,#c8960a,#ffd700);color:#0d0d00;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:2px;transition:all .2s;font-family:'Playfair Display',serif}
     .spin-btn:hover:not(:disabled){filter:brightness(1.1);transform:translateY(-2px);box-shadow:0 8px 24px rgba(255,215,0,.35)}
     .spin-btn:disabled{opacity:.32;cursor:not-allowed;transform:none}
-    .auto-btn{width:100%;margin-top:7px;padding:8px;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:transparent;color:var(--text-dim);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;letter-spacing:1px}
+    .ten-btn{width:100%;margin-top:7px;padding:11px;border:none;border-radius:12px;background:linear-gradient(135deg,#1a3a6e,#2860b8);color:#7ab4ff;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:1.5px;transition:all .2s;font-family:'Playfair Display',serif;border:1px solid rgba(100,160,255,.3)}
+    .ten-btn:hover:not(:disabled){filter:brightness(1.15);transform:translateY(-1px);box-shadow:0 6px 18px rgba(60,120,255,.3)}
+    .ten-btn:disabled{opacity:.32;cursor:not-allowed;transform:none}
+    .mode-row{display:flex;gap:7px;margin-top:7px}
+    .auto-btn{flex:1;padding:8px;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:transparent;color:var(--text-dim);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;letter-spacing:1px}
     .auto-btn:hover:not(:disabled){border-color:rgba(255,215,0,.3);color:var(--text)}
     .auto-btn.on{border-color:rgba(255,107,53,.5);color:#ff6b35;background:rgba(255,107,53,.07)}
+    .fast-btn{flex:1;padding:8px;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:transparent;color:var(--text-dim);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;letter-spacing:1px}
+    .fast-btn:hover:not(:disabled){border-color:rgba(100,200,255,.3);color:var(--text)}
+    .fast-btn.on{border-color:rgba(100,200,255,.5);color:#64c8ff;background:rgba(100,200,255,.07)}
 
     /* Stats row */
     .stats-mini{display:flex;gap:12px;margin-top:8px;flex-wrap:wrap}
@@ -185,7 +192,6 @@
   <a href="../blackjack/">21 點</a>
   <a href="../baccarat/">百家樂</a>
   <a href="./" class="active">老虎機</a>
-  <a href="../gacha/">🎪 扭蛋機</a>
 </nav>
 
 <main class="wrap">
@@ -235,7 +241,11 @@
         <button class="chip" onclick="setMax()">全押</button>
       </div>
       <button class="spin-btn" id="spinBtn" onclick="spin()">🎰 旋轉！SPIN!</button>
-      <button class="auto-btn" id="autoBtn" onclick="toggleAuto()">自動旋轉: 關</button>
+      <button class="ten-btn" id="tenBtn" onclick="spinTen()">⚡ 十連轉 (×10)</button>
+      <div class="mode-row">
+        <button class="auto-btn" id="autoBtn" onclick="toggleAuto()">自動: 關</button>
+        <button class="fast-btn" id="fastBtn" onclick="toggleFast()">⚡ 快速: 關</button>
+      </div>
       <div class="stats-mini">
         <div class="sm">局數: <span id="stN">0</span></div>
         <div class="sm">最大贏: <span class="gold" id="stMax">$0</span></div>
@@ -281,21 +291,56 @@ saveBal();
 
 // ── Sound wrappers ─────────────────────────────────────────────────────────
 function S(n){try{if(typeof Snd!=='undefined')Snd[n]();}catch(e){}}
+
 const SS=(()=>{
+  // CDN audio URLs for slot-specific sounds
+  const SURLS={
+    spin:   'https://quicksounds.com/uploads/tracks/786166423_1923553279_522890597.mp3',
+    coin:   'https://quicksounds.com/uploads/tracks/1294427390_31432338_1272967381.mp3',
+    jackpot:'https://quicksounds.com/uploads/tracks/2036224268_1228937944_735778521.mp3',
+    bigwin: 'https://quicksounds.com/uploads/tracks/1962705925_309925314_1269434881.mp3',
+    fever:  'https://quicksounds.com/uploads/tracks/544068319_552251017_357010058.mp3',
+    stop:   'https://quicksounds.com/uploads/tracks/1030198651_522781346_1376264581.mp3',
+    lose:   'https://quicksounds.com/uploads/tracks/268704246_1877883817_505991471.mp3',
+  };
+  const SVOL={spin:.55,coin:.65,jackpot:.9,bigwin:.85,fever:.75,stop:.45,lose:.6};
+  const sReady={};
+  const sPreload=(k)=>{
+    if(sReady[k]!==undefined)return;
+    sReady[k]=false;
+    const a=new Audio();a.preload='auto';a.src=SURLS[k];
+    a.addEventListener('canplaythrough',()=>{sReady[k]=true;},{once:true});
+    a.onerror=()=>{sReady[k]=null;};a.load();
+  };
+  let sLoaded=false;
+  const sEnsure=()=>{if(sLoaded)return;sLoaded=true;Object.keys(SURLS).forEach(sPreload);};
+  document.addEventListener('click',sEnsure,{once:true});
+  document.addEventListener('touchstart',sEnsure,{once:true});
+  const sPlay=(k,fallback)=>{
+    sEnsure();
+    if(sReady[k]===true||sReady[k]===false){
+      const a=new Audio(SURLS[k]);a.volume=SVOL[k]||0.6;a.play().catch(()=>fallback?.());
+      return;
+    }
+    fallback?.();
+  };
+
+  // Web Audio synthesis fallback
   let C;
   const ctx=()=>{if(!C)C=new(window.AudioContext||window.webkitAudioContext)();if(C.state==='suspended')C.resume();return C;};
   const t=(f,type,d,v=0.28,at=0)=>{const c=ctx(),o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.value=f;const s=c.currentTime+at;g.gain.setValueAtTime(v,s);g.gain.exponentialRampToValueAtTime(0.001,s+d);o.connect(g);g.connect(c.destination);o.start(s);o.stop(s+d+.05);};
   const noise=(d,fc,v=0.2)=>{const c=ctx(),b=c.createBuffer(1,~~(c.sampleRate*d),c.sampleRate),dd=b.getChannelData(0);for(let i=0;i<dd.length;i++)dd[i]=Math.random()*2-1;const src=c.createBufferSource();src.buffer=b;const f=c.createBiquadFilter();f.type='bandpass';f.frequency.value=fc;f.Q.value=0.8;const g=c.createGain();g.gain.setValueAtTime(v,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+d);src.connect(f);f.connect(g);g.connect(c.destination);src.start();};
+
   return{
-    spin:   ()=>noise(.14,400,.22),
-    stop:   (n)=>{t(80+n*35,'sine',.1,.45);t(130+n*25,'sine',.06,.2);},
+    spin:   ()=>sPlay('spin',  ()=>noise(.14,400,.22)),
+    stop:   (n)=>sPlay('stop', ()=>{t(80+n*35,'sine',.1,.45);t(130+n*25,'sine',.06,.2);}),
     scatter:()=>[700,900,1100,1400].forEach((f,i)=>t(f,'sine',.28,.22,i*.06)),
-    fever:  ()=>{[280,380,480,580,700,900].forEach((f,i)=>t(f,'square',.25,.14,i*.05));setTimeout(()=>[523,659,784,1047].forEach((f,i)=>t(f,'sine',.4,.25,i*.07)),400);},
-    jackpot:()=>{for(let i=0;i<8;i++)t(180+i*90,'sine',.6,.28,i*.08);setTimeout(()=>[523,659,784,1047,1319,1568].forEach((f,i)=>t(f,'sine',1,.35,i*.06)),700);},
-    near:   ()=>{t(380,'sawtooth',.09,.16);setTimeout(()=>t(300,'sawtooth',.14,.13),90);},
-    coin:   ()=>[1047,1319,1568].forEach((f,i)=>t(f,'sine',.18,.24,i*.04)),
+    fever:  ()=>sPlay('fever', ()=>{[280,380,480,580,700,900].forEach((f,i)=>t(f,'square',.25,.14,i*.05));setTimeout(()=>[523,659,784,1047].forEach((f,i)=>t(f,'sine',.4,.25,i*.07)),400);}),
+    jackpot:()=>sPlay('jackpot',()=>{for(let i=0;i<8;i++)t(180+i*90,'sine',.6,.28,i*.08);setTimeout(()=>[523,659,784,1047,1319,1568].forEach((f,i)=>t(f,'sine',1,.35,i*.06)),700);}),
+    near:   ()=>sPlay('lose',  ()=>{t(380,'sawtooth',.09,.16);setTimeout(()=>t(300,'sawtooth',.14,.13),90);}),
+    coin:   ()=>sPlay('coin',  ()=>[1047,1319,1568].forEach((f,i)=>t(f,'sine',.18,.24,i*.04))),
     zap:    ()=>{t(220,'sawtooth',.08,.3);t(440,'square',.05,.2,.04);},
-    bigwin: ()=>{t(220,'sine',.05,.4);[523,659,784,1047,1319].forEach((f,i)=>t(f,'sine',.5,.3,i*.08));},
+    bigwin: ()=>sPlay('bigwin',()=>{t(220,'sine',.05,.4);[523,659,784,1047,1319].forEach((f,i)=>t(f,'sine',.5,.3,i*.08));}),
   };
 })();
 
@@ -345,6 +390,10 @@ let jackpot=JACKPOT_BASE;
 let allInAmt=null; // stores exact balance for all-in (handles astronomical numbers)
 const CELL_H=88, PRE=45;
 
+// Fast spin & multi-spin state
+let fastMode=false;
+let multiLeft=0, multiTotalWin=0, multiBet=0;
+
 // Jackpot ticker
 setInterval(()=>{jackpot+=Math.floor(Math.random()*5+2);document.getElementById('jpDisplay').textContent='$'+jackpot.toLocaleString('en-US');},600);
 
@@ -352,7 +401,13 @@ setInterval(()=>{jackpot+=Math.floor(Math.random()*5+2);document.getElementById(
 function addBet(n){allInAmt=null;const i=document.getElementById('betInp');i.value=Math.min(5000,Math.max(10,(+i.value||0)+n));}
 function setMax(){allInAmt=bal;document.getElementById('betInp').value=bal;}
 function setWin(txt,cls){const b=document.getElementById('winBar');b.textContent=txt;b.className='win-bar'+(cls?' '+cls:'');}
-function lock(v){spinning=v;document.getElementById('spinBtn').disabled=v;document.getElementById('lever').style.pointerEvents=v?'none':'auto';document.getElementById('betInp').disabled=v;}
+function lock(v){
+  spinning=v;
+  document.getElementById('spinBtn').disabled=v;
+  document.getElementById('tenBtn').disabled=v||(multiLeft>0);
+  document.getElementById('lever').style.pointerEvents=v?'none':'auto';
+  document.getElementById('betInp').disabled=v;
+}
 
 function updateUI(){
   document.getElementById('bFever').className='badge badge-fever'+(fever?' show':'');
@@ -365,15 +420,34 @@ function updateUI(){
   document.getElementById('stC').textContent=consec;
 }
 
+// ── Fast spin toggle ───────────────────────────────────────────────────────
+function toggleFast(){
+  fastMode=!fastMode;
+  const b=document.getElementById('fastBtn');
+  b.textContent=fastMode?'⚡ 快速: 開':'⚡ 快速: 關';
+  b.classList.toggle('on',fastMode);
+}
+
 // ── Auto spin ──────────────────────────────────────────────────────────────
 function toggleAuto(){
   autoOn=!autoOn;
   const b=document.getElementById('autoBtn');
-  b.textContent=autoOn?'自動旋轉: 開 (點擊停止)':'自動旋轉: 關';
+  b.textContent=autoOn?'自動: 開':'自動: 關';
   b.classList.toggle('on',autoOn);
   if(autoOn&&!spinning)schedAuto();
 }
-function schedAuto(){if(!autoOn)return;autoTimer=setTimeout(()=>{if(autoOn&&!spinning)spin();},700);}
+function schedAuto(){if(!autoOn)return;autoTimer=setTimeout(()=>{if(autoOn&&!spinning)spin();},fastMode?300:700);}
+
+// ── Ten-spin ───────────────────────────────────────────────────────────────
+function spinTen(){
+  if(spinning||multiLeft>0)return;
+  const bet=allInAmt!==null?(()=>{const v=allInAmt;allInAmt=null;return v;})():(Math.floor(+document.getElementById('betInp').value)||0);
+  if(bet<10){setWin('最低下注 $10','');return;}
+  if(bet>bal&&freeSpins<=0){setWin('籌碼不足！','');return;}
+  multiLeft=10; multiTotalWin=0; multiBet=bet;
+  document.getElementById('tenBtn').disabled=true;
+  spin();
+}
 
 // ── Reel strip builder ─────────────────────────────────────────────────────
 function buildStrip(reelIdx,resultCol){
@@ -434,20 +508,22 @@ function spin(){
   let done=0;
   [0,1,2].forEach(r=>{
     const strip=buildStrip(r,res[r]);
-    strip.classList.add('spinning');
     strip.style.transition='none';
     strip.style.transform='translateY(0)';
     void strip.offsetHeight;
 
-    const dur=1.55+r*0.38; // 1.55s / 1.93s / 2.31s
+    const dur=fastMode?(0.32+r*0.12):(1.55+r*0.38); // fast: .32/.44/.56s  normal: 1.55/1.93/2.31s
+
+    // Blur during spin (skip in fast mode for performance)
+    if(!fastMode)strip.classList.add('spinning');
 
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
-      strip.style.transition=`transform ${dur}s cubic-bezier(0.22,1,0.36,1), filter .25s`;
+      strip.style.transition=`transform ${dur}s cubic-bezier(0.22,1,0.36,1)${fastMode?'':`, filter .25s`}`;
       strip.style.transform=`translateY(-${PRE*CELL_H}px)`;
     }));
 
     // Remove blur just before stopping for clean snap
-    setTimeout(()=>strip.classList.remove('spinning'),(dur-.25)*1000);
+    setTimeout(()=>strip.classList.remove('spinning'),Math.max(0,(dur-.25)*1000));
 
     setTimeout(()=>{
       SS.stop(r); S('chip');
@@ -521,6 +597,32 @@ function resolve(bet,wasFree){
 
   updateUI();
   lock(false);
+
+  // ── Multi-spin (十連轉) chain ──────────────────────────────────────────────
+  if(multiLeft>0){
+    if(hasJP&&total>0){multiLeft=0;document.getElementById('tenBtn').disabled=false;return;}
+    multiTotalWin+=Math.max(0,Math.floor(total));
+    multiLeft--;
+    if(multiLeft>0&&(bal>=multiBet||freeSpins>0)){
+      const spinsLeft=multiLeft;
+      setWin(`⚡ 十連轉第 ${10-spinsLeft}/10 轉… 累計贏 $${multiTotalWin.toLocaleString()}`,'');
+      setTimeout(()=>{if(!autoOn)spin();},fastMode?180:550);
+    } else {
+      const grandTotal=multiTotalWin;
+      multiLeft=0;
+      document.getElementById('tenBtn').disabled=false;
+      setTimeout(()=>{
+        if(grandTotal>0){
+          setWin(`⚡ 十連轉完成！總贏 $${grandTotal.toLocaleString()}`,'win');
+          if(grandTotal>=1000){burst(20,'#ffd700');burst(10,'#64c8ff');}
+        } else {
+          setWin('⚡ 十連轉完成！本次未中獎','');
+        }
+      },fastMode?80:200);
+    }
+    return;
+  }
+
   if(autoOn)schedAuto();
   if(freeSpins>0&&!autoOn){setWin((document.getElementById('winBar').textContent)+` (剩餘免費 ×${freeSpins})`,'fs');}
 }

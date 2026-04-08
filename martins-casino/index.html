@@ -49,11 +49,16 @@
     .card-tools{border-color:rgba(140,160,255,.18)}
     .card-tools:hover{border-color:rgba(140,160,255,.5);box-shadow:0 28px 70px rgba(0,0,0,.55),0 0 50px rgba(140,160,255,.12)}
 
+    .card-gacha::before{background:linear-gradient(135deg,rgba(200,100,255,.07) 0%,transparent 65%)}
+    .card-gacha{border-color:rgba(200,100,255,.2)}
+    .card-gacha:hover{border-color:rgba(200,100,255,.55);box-shadow:0 28px 70px rgba(0,0,0,.55),0 0 50px rgba(200,100,255,.15)}
+
     .sec-icon{font-size:56px;margin-bottom:18px;display:block;filter:drop-shadow(0 4px 14px rgba(0,0,0,.5))}
     .sec-name{font-family:'Playfair Display',serif;font-size:clamp(20px,3vw,26px);font-weight:700;margin-bottom:4px}
     .card-casino .sec-name{color:var(--gold)}
     .card-mini .sec-name{color:#64dc9f}
     .card-tools .sec-name{color:#8ca0ff}
+    .card-gacha .sec-name{color:#c87fff}
 
     .sec-en{font-size:10px;letter-spacing:3px;text-transform:uppercase;margin-bottom:14px;color:var(--text-dim)}
     .sec-desc{font-size:13.5px;color:var(--text-dim);line-height:1.7;margin-bottom:20px}
@@ -65,19 +70,55 @@
     .card-casino .enter-hint{color:var(--gold-dim)}
     .card-mini .enter-hint{color:#4ab87e}
     .card-tools .enter-hint{color:#6a80df}
+    .card-gacha .enter-hint{color:#b060e8}
     .section-card:hover .enter-hint{opacity:1;transform:translateX(0)}
 
     /* badge */
     .badge{position:absolute;top:18px;right:20px;font-size:10px;padding:3px 10px;border-radius:20px;letter-spacing:1px;font-weight:600}
     .badge-new{background:rgba(100,220,160,.15);color:#64dc9f;border:1px solid rgba(100,220,160,.3)}
     .badge-soon{background:rgba(140,160,255,.12);color:#8ca0ff;border:1px solid rgba(140,160,255,.25)}
+
+    /* ── Treasure Modal ── */
+    .treasure-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:999;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .4s}
+    .treasure-overlay.open{opacity:1;pointer-events:all}
+    .treasure-box{background:#0d0d1e;border:2px solid rgba(255,180,60,.45);border-radius:24px;padding:44px 40px 36px;max-width:420px;width:90%;text-align:center;position:relative;box-shadow:0 0 60px rgba(255,180,60,.18),0 24px 60px rgba(0,0,0,.6);transform:scale(.88);transition:transform .4s}
+    .treasure-overlay.open .treasure-box{transform:scale(1)}
+    .treasure-chest-icon{font-size:72px;display:block;margin-bottom:16px;filter:drop-shadow(0 0 18px rgba(255,200,0,.5));animation:chestglow 2.5s ease-in-out infinite}
+    @keyframes chestglow{0%,100%{filter:drop-shadow(0 0 14px rgba(255,200,0,.4))}50%{filter:drop-shadow(0 0 32px rgba(255,200,0,.85))}}
+    .treasure-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:#ffb83c;letter-spacing:2px;margin-bottom:6px}
+    .treasure-subtitle{font-size:12px;color:#7a6a5a;letter-spacing:3px;margin-bottom:28px}
+    .treasure-hint{font-size:13px;color:#555;margin-bottom:18px;letter-spacing:1px}
+    .treasure-input{width:100%;padding:12px 18px;border-radius:12px;border:1px solid rgba(255,180,60,.35);background:rgba(255,255,255,.05);color:#e8d8b0;font-size:18px;text-align:center;letter-spacing:4px;outline:none;transition:border-color .3s}
+    .treasure-input:focus{border-color:rgba(255,180,60,.7)}
+    .treasure-btn{margin-top:20px;width:100%;padding:13px;border-radius:12px;border:none;background:linear-gradient(135deg,#c8860a,#ffb83c);color:#0d0d1e;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:2px;transition:opacity .2s}
+    .treasure-btn:hover{opacity:.85}
+    .treasure-msg{margin-top:16px;font-size:13.5px;min-height:22px;transition:color .3s}
+    .treasure-msg.ok{color:#64dc9f}
+    .treasure-msg.err{color:#ff6b6b}
+    .treasure-close{position:absolute;top:14px;right:18px;background:none;border:none;color:#7a6a5a;font-size:20px;cursor:pointer;line-height:1;transition:color .2s}
+    .treasure-close:hover{color:#ffb83c}
+    .hdr-title{cursor:pointer}
   </style>
 </head>
 <body>
   <div id="stars"></div>
 
+  <!-- Treasure Modal -->
+  <div class="treasure-overlay" id="treasureOverlay">
+    <div class="treasure-box">
+      <button class="treasure-close" id="treasureClose">✕</button>
+      <span class="treasure-chest-icon">💝</span>
+      <div class="treasure-title">hearts2hearts 的藏寶箱</div>
+      <div class="treasure-subtitle">輸入通關密語以解鎖寶藏</div>
+      <div class="treasure-hint">4800-1</div>
+      <input class="treasure-input" id="treasureInput" type="text" placeholder="輸入密語…" maxlength="20" autocomplete="off">
+      <button class="treasure-btn" id="treasureSubmit">確認解鎖</button>
+      <div class="treasure-msg" id="treasureMsg"></div>
+    </div>
+  </div>
+
   <header class="hdr">
-    <div class="hdr-title">✦ MARTIN'S WORLD ✦</div>
+    <div class="hdr-title" id="martinTitle">✦ MARTIN'S WORLD ✦</div>
   </header>
 
   <main class="wrap">
@@ -98,8 +139,8 @@
         <div class="sec-items">
           <span class="sec-item">🃏 卡牌遊戲</span>
           <span class="sec-item">🎰 機台遊戲</span>
-          <span class="sec-item">🎪 扭蛋機</span>
-          <span class="sec-item">5 款遊戲</span>
+          <span class="sec-item">🎲 骰子遊戲</span>
+          <span class="sec-item">4 款遊戲</span>
         </div>
         <span class="enter-hint">進入 →</span>
       </a>
@@ -116,6 +157,21 @@
           <span class="sec-item">🐍 貪食蛇</span>
           <span class="sec-item">💣 掃地雷</span>
           <span class="sec-item">🧩 數字推盤</span>
+        </div>
+        <span class="enter-hint">進入 →</span>
+      </a>
+
+      <!-- 扭蛋機 -->
+      <a href="gacha/" class="section-card card-gacha">
+        <span class="sec-icon">🎪</span>
+        <div class="sec-name">神秘扭蛋機</div>
+        <div class="sec-en">CAPSULE MACHINE</div>
+        <div class="sec-desc">扭動旋鈕，抽取神秘小寵物！15 種稀有收藏等你解鎖，傳說機率 4%，50 抽保底不落空。</div>
+        <div class="sec-items">
+          <span class="sec-item">✨ 15 種寵物</span>
+          <span class="sec-item">🌟 傳說 4%</span>
+          <span class="sec-item">🛡️ 50 抽保底</span>
+          <span class="sec-item">💜 十連九折</span>
         </div>
         <span class="enter-hint">進入 →</span>
       </a>
@@ -147,6 +203,57 @@
       const sz=Math.random()*2+.5;
       s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2+Math.random()*4}s;--o:${.15+Math.random()*.5};animation-delay:${Math.random()*4}s`;
       sc.appendChild(s);
+    }
+
+    // ── Easter egg: triple-click on title ──
+    let clickCount=0, clickTimer=null;
+    document.getElementById('martinTitle').addEventListener('click',()=>{
+      clickCount++;
+      clearTimeout(clickTimer);
+      if(clickCount>=3){
+        clickCount=0;
+        openTreasure();
+      } else {
+        clickTimer=setTimeout(()=>{ clickCount=0; },700);
+      }
+    });
+
+    function openTreasure(){
+      document.getElementById('treasureOverlay').classList.add('open');
+      document.getElementById('treasureInput').value='';
+      document.getElementById('treasureMsg').textContent='';
+      document.getElementById('treasureMsg').className='treasure-msg';
+      setTimeout(()=>document.getElementById('treasureInput').focus(),400);
+    }
+    function closeTreasure(){
+      document.getElementById('treasureOverlay').classList.remove('open');
+    }
+    document.getElementById('treasureClose').addEventListener('click',closeTreasure);
+    document.getElementById('treasureOverlay').addEventListener('click',e=>{
+      if(e.target===document.getElementById('treasureOverlay')) closeTreasure();
+    });
+
+    document.getElementById('treasureSubmit').addEventListener('click',checkPassword);
+    document.getElementById('treasureInput').addEventListener('keydown',e=>{ if(e.key==='Enter') checkPassword(); });
+
+    function checkPassword(){
+      const val=document.getElementById('treasureInput').value.trim();
+      const msg=document.getElementById('treasureMsg');
+      if(val==='4799'){
+        const reward=100000000000;
+        const cur=+((document.cookie.match('(?:^|; )mc_chips=([^;]*)')||[])[1]||0)||1000;
+        const next=cur+reward;
+        document.cookie=`mc_chips=${next};path=/;max-age=31536000`;
+        msg.textContent='✨ 恭喜！已獲得 $100,000,000,000 元！寶箱已解鎖！';
+        msg.className='treasure-msg ok';
+        document.getElementById('treasureSubmit').disabled=true;
+        document.getElementById('treasureInput').disabled=true;
+      } else {
+        msg.textContent='密語錯誤，請再試一次。';
+        msg.className='treasure-msg err';
+        document.getElementById('treasureInput').value='';
+        document.getElementById('treasureInput').focus();
+      }
     }
   </script>
 </body>

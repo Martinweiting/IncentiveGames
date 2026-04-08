@@ -3,7 +3,16 @@
     "allow": [
       "Read(//c/Users/Martin/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.5.0/.claude/skills/ui-ux-pro-max/**)",
       "Bash(python3 scripts/search.py \"casino luxury dark gold entertainment gaming\" --design-system -p \"MartinsCasino\" -f markdown)",
-      "Bash(python scripts/search.py \"casino luxury dark gold entertainment gaming\" --design-system -p \"MartinsCasino\" -f markdown)"
+      "Bash(python scripts/search.py \"casino luxury dark gold entertainment gaming\" --design-system -p \"MartinsCasino\" -f markdown)",
+      "Bash(grep -E \"\\\\.\\(html|js\\)$\")",
+      "WebFetch(domain:mixkit.co)",
+      "WebSearch",
+      "WebFetch(domain:kenney.nl)",
+      "WebFetch(domain:pixabay.com)",
+      "WebFetch(domain:www.zapsplat.com)",
+      "WebFetch(domain:freesound.org)",
+      "WebFetch(domain:kenney.itch.io)",
+      "WebFetch(domain:quicksounds.com)"
     ]
   }
 }
