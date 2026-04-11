@@ -98,10 +98,46 @@
     .treasure-close{position:absolute;top:14px;right:18px;background:none;border:none;color:#7a6a5a;font-size:20px;cursor:pointer;line-height:1;transition:color .2s}
     .treasure-close:hover{color:#ffb83c}
     .hdr-title{cursor:pointer}
+
+    /* ── Nickname Modal ── */
+    .nick-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .35s}
+    .nick-overlay.open{opacity:1;pointer-events:all}
+    .nick-box{background:#0d0d1e;border:2px solid rgba(255,215,0,.4);border-radius:24px;padding:44px 40px 36px;max-width:400px;width:90%;text-align:center;position:relative;box-shadow:0 0 60px rgba(255,215,0,.15),0 24px 60px rgba(0,0,0,.6);transform:scale(.9);transition:transform .35s}
+    .nick-overlay.open .nick-box{transform:scale(1)}
+    .nick-icon{font-size:64px;display:block;margin-bottom:14px;animation:nickglow 2.5s ease-in-out infinite}
+    @keyframes nickglow{0%,100%{filter:drop-shadow(0 0 12px rgba(255,215,0,.35))}50%{filter:drop-shadow(0 0 28px rgba(255,215,0,.75))}}
+    .nick-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:var(--gold);letter-spacing:2px;margin-bottom:6px}
+    .nick-sub{font-size:12px;color:var(--text-dim);letter-spacing:3px;margin-bottom:28px}
+    .nick-input{width:100%;padding:12px 18px;border-radius:12px;border:1px solid rgba(255,215,0,.3);background:rgba(255,255,255,.05);color:var(--text);font-size:18px;text-align:center;letter-spacing:2px;outline:none;transition:border-color .3s;font-family:'Inter',sans-serif}
+    .nick-input:focus{border-color:rgba(255,215,0,.65)}
+    .nick-btn{margin-top:18px;width:100%;padding:13px;border-radius:12px;border:none;background:linear-gradient(135deg,#b8780a,#ffd700);color:#0d0d1e;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:2px;transition:opacity .2s}
+    .nick-btn:hover{opacity:.85}
+    .nick-err{margin-top:12px;font-size:13px;color:#ff6b6b;min-height:20px}
+    .nick-change{margin-top:14px;font-size:12px;color:var(--text-dim);cursor:pointer;letter-spacing:1px;transition:color .2s;background:none;border:none;display:none}
+    .nick-change:hover{color:var(--gold)}
+
+    /* ── Header nickname chip ── */
+    .hdr{justify-content:space-between}
+    .hdr-left{min-width:100px}
+    .nick-chip{font-size:13px;color:var(--gold-dim);cursor:pointer;transition:color .2s;white-space:nowrap;min-width:100px;text-align:right}
+    .nick-chip:hover{color:var(--gold)}
   </style>
 </head>
 <body>
   <div id="stars"></div>
+
+  <!-- Nickname Modal -->
+  <div class="nick-overlay" id="nickOverlay">
+    <div class="nick-box">
+      <span class="nick-icon">🎭</span>
+      <div class="nick-title">你的暱稱</div>
+      <div class="nick-sub">設定後開始遊戲 · 餘額獨立儲存</div>
+      <input class="nick-input" id="nickInput" type="text" placeholder="輸入暱稱…" maxlength="16" autocomplete="off">
+      <button class="nick-btn" id="nickSubmit">進入遊戲 ✦</button>
+      <div class="nick-err" id="nickErr"></div>
+      <button class="nick-change" id="nickChange">更換暱稱</button>
+    </div>
+  </div>
 
   <!-- Treasure Modal -->
   <div class="treasure-overlay" id="treasureOverlay">
@@ -118,7 +154,9 @@
   </div>
 
   <header class="hdr">
+    <div class="hdr-left"></div>
     <div class="hdr-title" id="martinTitle">✦ MARTIN'S WORLD ✦</div>
+    <div class="nick-chip" id="nickChip" title="點擊更換暱稱"></div>
   </header>
 
   <main class="wrap">
@@ -195,6 +233,7 @@
     </div>
   </main>
 
+  <script src="./player.js"></script>
   <script>
     const sc=document.getElementById('stars');
     for(let i=0;i<80;i++){
@@ -204,6 +243,40 @@
       s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2+Math.random()*4}s;--o:${.15+Math.random()*.5};animation-delay:${Math.random()*4}s`;
       sc.appendChild(s);
     }
+
+    // ── Nickname ──
+    function renderNickChip(){
+      const nick=MC.getNickname();
+      const chip=document.getElementById('nickChip');
+      chip.textContent=nick ? '👤 '+nick : '';
+    }
+    function openNickModal(isChange){
+      const overlay=document.getElementById('nickOverlay');
+      const input=document.getElementById('nickInput');
+      const changeBtn=document.getElementById('nickChange');
+      document.getElementById('nickErr').textContent='';
+      input.value=MC.getNickname();
+      changeBtn.style.display=isChange?'none':'none'; // only shown after first set via chip
+      overlay.classList.add('open');
+      setTimeout(()=>input.focus(),350);
+    }
+    function closeNickModal(){ document.getElementById('nickOverlay').classList.remove('open'); }
+    function submitNick(){
+      const val=document.getElementById('nickInput').value.trim();
+      const err=document.getElementById('nickErr');
+      if(!val){ err.textContent='請輸入暱稱'; return; }
+      if(val.length<2){ err.textContent='暱稱至少 2 個字元'; return; }
+      MC.setNickname(val);
+      renderNickChip();
+      closeNickModal();
+    }
+    document.getElementById('nickSubmit').addEventListener('click',submitNick);
+    document.getElementById('nickInput').addEventListener('keydown',e=>{ if(e.key==='Enter') submitNick(); });
+    document.getElementById('nickChip').addEventListener('click',()=>openNickModal(true));
+
+    // Open modal on first visit
+    if(!MC.getNickname()) openNickModal(false);
+    renderNickChip();
 
     // ── Easter egg: triple-click on title ──
     let clickCount=0, clickTimer=null;
@@ -241,9 +314,8 @@
       const msg=document.getElementById('treasureMsg');
       if(val==='4799'){
         const reward=100000000000;
-        const cur=+((document.cookie.match('(?:^|; )mc_chips=([^;]*)')||[])[1]||0)||1000;
-        const next=cur+reward;
-        document.cookie=`mc_chips=${next};path=/;max-age=31536000`;
+        const next=MC.loadBalance()+reward;
+        MC.saveBalance(next);
         msg.textContent='✨ 恭喜！已獲得 $100,000,000,000 元！寶箱已解鎖！';
         msg.className='treasure-msg ok';
         document.getElementById('treasureSubmit').disabled=true;

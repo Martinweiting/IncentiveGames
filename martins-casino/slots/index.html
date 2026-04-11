@@ -279,14 +279,12 @@
 </div>
 </main>
 
+<script src="../player.js"></script>
 <script>
 // ── Balance ────────────────────────────────────────────────────────────────
-function getCookie(k){return+((document.cookie.match('(?:^|; )'+k+'=([^;]*)')||[])[1]||0);}
-function setCookie(k,v){document.cookie=k+'='+v+';max-age=31536000;path=/';}
-let bal=(()=>{const v=getCookie('mc_chips');return v>0?v:1000;})();
-setCookie('mc_chips',bal);
+let bal=MC.loadBalance();
 const $bal=document.getElementById('bal');
-function saveBal(){setCookie('mc_chips',bal);$bal.textContent='$'+bal.toLocaleString('en-US');}
+function saveBal(){MC.saveBalance(bal);$bal.textContent='$'+bal.toLocaleString('en-US');}
 saveBal();
 
 // ── Sound wrappers ─────────────────────────────────────────────────────────
@@ -398,7 +396,7 @@ let multiLeft=0, multiTotalWin=0, multiBet=0;
 setInterval(()=>{jackpot+=Math.floor(Math.random()*5+2);document.getElementById('jpDisplay').textContent='$'+jackpot.toLocaleString('en-US');},600);
 
 // ── UI helpers ─────────────────────────────────────────────────────────────
-function addBet(n){allInAmt=null;const i=document.getElementById('betInp');i.value=Math.min(5000,Math.max(10,(+i.value||0)+n));}
+function addBet(n){allInAmt=null;const i=document.getElementById('betInp');i.value=Math.max(10,(+i.value||0)+n);}
 function setMax(){allInAmt=bal;document.getElementById('betInp').value=bal;}
 function setWin(txt,cls){const b=document.getElementById('winBar');b.textContent=txt;b.className='win-bar'+(cls?' '+cls:'');}
 function lock(v){

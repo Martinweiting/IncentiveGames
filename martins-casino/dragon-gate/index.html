@@ -971,6 +971,7 @@
       <a href="../blackjack/">21 點</a>
       <a href="../baccarat/">百家樂</a>
       <a href="../slots/">老虎機</a>
+      <a href="../roulette/">輪盤</a>
       <a href="../gacha/">🎪 扭蛋機</a>
     </nav>
     <div class="balance-block">
@@ -1175,6 +1176,7 @@
   </main>
 
 <script src="../sounds.js"></script>
+<script src="../player.js"></script>
 <script>
 /* ═══════════════════════════════════
    CONSTANTS & DECK
@@ -1187,9 +1189,7 @@ const RED_S  = new Set(['♥','♦']);
 /* ═══════════════════════════════════
    STATE
 ═══════════════════════════════════ */
-function getCookie(k){return+((document.cookie.match('(?:^|; )'+k+'=([^;]*)')||[])[1]||0);}
-function setCookie(k,v){document.cookie=k+'='+v+';max-age=31536000;path=/';}
-let balance=(()=>{const v=getCookie('mc_chips');return v>0?v:1000;})();setCookie('mc_chips',balance);
+let balance=MC.loadBalance();
 let deck     = [];
 let state    = 'idle';  // idle | dealt | pair-dealt | ghost-mode | shooting | result
 let leftCard, rightCard, thirdCard;
@@ -1266,7 +1266,7 @@ function setChips(enabled) {
 function updateBalance(delta) {
   balance += delta;
   if (balance < 0) balance = 0;
-  setCookie('mc_chips',balance);
+  MC.saveBalance(balance);
   const el = $('balance-display');
   el.textContent = fmt(balance);
   el.classList.remove('flash-up', 'flash-down');

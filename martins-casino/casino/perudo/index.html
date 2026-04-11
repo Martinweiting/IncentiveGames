@@ -293,6 +293,7 @@
   </div>
 </div>
 
+<script src="../../player.js"></script>
 <script>
 // ═══════════════════════════════════════════════════════════════
 //  SOUND SYSTEM (Web Audio API synthesis)
@@ -387,8 +388,8 @@ for(let i=0;i<90;i++){
 // ═══════════════════════════════════════════════════════════════
 //  CHIPS
 // ═══════════════════════════════════════════════════════════════
-function getChips(){const v=+((document.cookie.match('(?:^|; )mc_chips=([^;]*)')||[])[1]||0);return v>0?v:1000}
-function setChips(n){const d=new Date;d.setFullYear(d.getFullYear()+1);document.cookie=`mc_chips=${Math.max(0,Math.round(n))};expires=${d.toUTCString()};path=/`}
+function getChips(){return MC.loadBalance()}
+function setChips(n){MC.saveBalance(n)}
 function updBal(){document.getElementById('bal').textContent='$'+getChips().toLocaleString('en-US')}
 updBal();
 

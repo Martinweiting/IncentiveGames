@@ -205,6 +205,7 @@
     <a href="./" class="active">21 點</a>
     <a href="../baccarat/">百家樂</a>
     <a href="../slots/">老虎機</a>
+    <a href="../roulette/">輪盤</a>
     <a href="../gacha/">🎪 扭蛋機</a>
   </nav>
   <div class="bal-block">
@@ -295,6 +296,7 @@
 </main>
 
 <script src="../sounds.js"></script>
+<script src="../player.js"></script>
 <script>
 /* ── Safe sound wrapper (never throws) ── */
 function S(name){try{if(typeof Snd!=='undefined')Snd[name]();}catch(e){}}
@@ -302,9 +304,7 @@ function S(name){try{if(typeof Snd!=='undefined')Snd[name]();}catch(e){}}
 const $=id=>document.getElementById(id);
 
 /* ── State ── */
-function getCookie(k){return+((document.cookie.match('(?:^|; )'+k+'=([^;]*)')||[])[1]||0);}
-function setCookie(k,v){document.cookie=k+'='+v+';max-age=31536000;path=/';}
-let balance=(()=>{const v=getCookie('mc_chips');return v>0?v:1000;})();setCookie('mc_chips',balance);
+let balance=MC.loadBalance();
 let deck=[],ph=[],dh=[],bet=0,phase='idle',hiddenEl=null;
 let stats={w:0,l:0,p:0,bj:0,r:0},hist=[];
 
@@ -330,7 +330,7 @@ function setStatus(m){$('smsg').textContent=m;}
 /* ── BALANCE ── */
 function updateBal(delta){
   balance+=delta; if(balance<0)balance=0;
-  setCookie('mc_chips',balance);
+  MC.saveBalance(balance);
   const el=$('bal');
   el.textContent=fmt(balance);
   el.classList.remove('fu','fd'); void el.offsetWidth;

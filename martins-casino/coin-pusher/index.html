@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>推幣機 · Martin's Casino</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--gold:#ffd700;--gold-dim:#b8922a;--bg:#080810;--surface:#10101c;--text:#d4c5a9;--text-dim:#7a6a5a}
+    body{background:var(--bg);background-image:radial-gradient(ellipse at top,#14142a 0%,var(--bg) 70%);color:var(--text);font-family:'Inter','Microsoft JhengHei',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden}
+
+    .hdr{width:100%;display:flex;align-items:center;justify-content:space-between;padding:14px 28px;background:rgba(8,8,16,.92);border-bottom:1px solid rgba(255,215,0,.15);position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
+    .back-btn{color:var(--gold-dim);text-decoration:none;font-size:13px;font-weight:500;transition:color .2s;white-space:nowrap}
+    .back-btn:hover{color:var(--gold)}
+    .hdr-title{font-family:'Playfair Display',serif;font-size:clamp(16px,3vw,22px);font-weight:900;color:var(--gold);letter-spacing:3px;text-shadow:0 0 20px rgba(255,215,0,.3)}
+    .bal-block{display:flex;flex-direction:column;align-items:flex-end}
+    .bal-lbl{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1.5px}
+    .bal-amt{font-size:clamp(16px,3vw,22px);font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums}
+
+    .game-wrap{display:flex;flex-direction:column;align-items:center;padding:20px 16px 40px;gap:14px;width:100%;max-width:760px}
+
+    #cv{border:2px solid rgba(255,215,0,.25);border-radius:16px;cursor:crosshair;max-width:100%;display:block;box-shadow:0 0 30px rgba(255,215,0,.08);transition:border-color .3s,box-shadow .4s}
+    #cv.fever{border-color:rgba(255,80,30,.7)!important;box-shadow:0 0 60px rgba(255,80,30,.4)!important}
+
+    .stats-row{display:flex;gap:28px;align-items:center;justify-content:center;flex-wrap:wrap}
+    .stat{text-align:center}
+    .stat-lbl{font-size:10px;color:var(--text-dim);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:3px}
+    .stat-val{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;display:block}
+    .stat-val.g{color:var(--gold)}
+    .stat-val.w{color:#64dc9f}
+    .stat-val.d{color:var(--text-dim)}
+
+    .ctrl-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center}
+    .btn{padding:10px 22px;border-radius:12px;border:1px solid rgba(255,215,0,.3);background:rgba(255,215,0,.07);color:var(--gold);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;letter-spacing:.5px}
+    .btn:hover:not(:disabled){background:rgba(255,215,0,.16);border-color:rgba(255,215,0,.55)}
+    .btn:active:not(:disabled){transform:scale(.96)}
+    .btn:disabled{opacity:.3;cursor:default}
+    .btn.on{background:rgba(100,220,160,.1);border-color:rgba(100,220,160,.4);color:#64dc9f}
+    .fever-btn{border-color:rgba(255,90,30,.4)!important;background:rgba(255,90,30,.07)!important;color:#ff7040!important}
+    .fever-btn.ready{animation:fpulse .65s ease-in-out infinite alternate}
+    .fever-btn.active{background:rgba(255,90,30,.22)!important}
+    @keyframes fpulse{to{box-shadow:0 0 20px rgba(255,90,30,.6);border-color:rgba(255,90,30,.9)!important}}
+    .cost-tag{font-size:12px;color:var(--text-dim);padding:5px 13px;border-radius:20px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
+
+    .wflash{position:fixed;inset:0;pointer-events:none;z-index:999;opacity:0;transition:opacity .07s}
+  </style>
+</head>
+<body>
+
+<div class="wflash" id="wf"></div>
+
+<header class="hdr">
+  <a href="../casino/" class="back-btn">← 賭場大廳</a>
+  <div class="hdr-title">🪙 推幣機</div>
+  <div class="bal-block">
+    <span class="bal-lbl">籌碼</span>
+    <span class="bal-amt" id="balEl">$0</span>
+  </div>
+</header>
+
+<div class="game-wrap">
+  <canvas id="cv" width="720" height="450"></canvas>
+
+  <div class="stats-row">
+    <div class="stat">
+      <span class="stat-lbl">本局贏得</span>
+      <span class="stat-val w" id="wonEl">$0</span>
+    </div>
+    <div class="stat">
+      <span class="stat-lbl">大獎池</span>
+      <span class="stat-val g" id="jpEl">$50,000</span>
+    </div>
+    <div class="stat">
+      <span class="stat-lbl">累計投入</span>
+      <span class="stat-val d" id="spentEl">$0</span>
+    </div>
+  </div>
+
+  <div class="ctrl-row">
+    <span class="cost-tag">每枚 $25</span>
+    <button class="btn" id="dropBtn">投幣 🪙</button>
+    <button class="btn" id="autoBtn">自動投幣</button>
+    <button class="btn fever-btn" id="feverBtn" disabled>🔥 FEVER</button>
+  </div>
+</div>
+
+<script src="../player.js"></script>
+<script>
+// ══════════════════════════════════════════════
+//  SETUP
+// ══════════════════════════════════════════════
+const CV = document.getElementById('cv');
+const ctx = CV.getContext('2d');
+const W = CV.width, H = CV.height;
+
+// Layout
+const SY   = 330;        // shelf surface y
+const SL   = 68;         // shelf left wall x
+const SR   = 655;        // win edge x
+const SHT  = 26;         // shelf visual thickness
+const PMIN = SL;         // pusher right-edge retracted
+const PMAX = SL + 168;   // pusher right-edge extended
+const CR   = 13;         // coin radius
+const COST = 25;         // chips per drop
+const CMAX = 88;         // max coins allowed
+
+// Coin types: {id, value, col, hi, lo, lbl, weight}
+const T = [
+  {id:'c', v:30,    col:'#c87a3a', hi:'#efa060', lo:'#8a4218', lbl:'₵', w:46},
+  {id:'s', v:160,   col:'#9ca3af', hi:'#d4d8dd', lo:'#5a6370', lbl:'S', w:27},
+  {id:'g', v:700,   col:'#f59e0b', hi:'#fde48a', lo:'#b45209', lbl:'G', w:17},
+  {id:'r', v:3000,  col:'#dc2626', hi:'#fca5a5', lo:'#991b1b', lbl:'♦', w:8},
+  {id:'x', v:0,     col:'#7c2d12', hi:'#fcd34d', lo:'#431407', lbl:'✦', w:2},
+];
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let bal      = MC.loadBalance();
+let won      = 0;
+let spent    = 0;
+let jackpot  = 50000;
+let drops    = 0;
+let bonusCD  = 0;
+
+let coins    = [];   // {x,y,vx,vy,t,v,settled}
+let parts    = [];   // sparkle particles
+let lbls     = [];   // floating "+$xxx" labels
+
+let px       = PMIN; // pusher right-edge x (absolute canvas coords)
+let pv       = 1.35; // pusher velocity (px/frame)
+
+let fever    = false;
+let feverT   = 0;    // remaining fever frames
+let feverCD  = 0;    // cooldown frames
+let fmeter   = 0;    // 0–100 fever gauge
+let fReady   = false;
+
+let autoOn   = false;
+let autoT    = 0;
+
+// ══════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════
+function rndType(bonus) {
+  if (bonus) return T[2 + Math.floor(Math.random() * 3)];
+  let r = Math.random() * T.reduce((s,t) => s+t.w, 0);
+  for (const t of T) { r -= t.w; if (r <= 0) return t; }
+  return T[0];
+}
+
+function mkCoin(x, y, t, vx, vy) {
+  return {x, y, vx:vx||0, vy:vy||0, t, v: t.id==='x' ? jackpot : t.v, settled:false};
+}
+
+function addSparks(x, y, color, n) {
+  for (let i = 0; i < (n||10); i++) {
+    const a = Math.random() * Math.PI * 2, s = 1.5 + Math.random() * 4;
+    parts.push({x, y, vx:Math.cos(a)*s, vy:Math.sin(a)*s-2, life:55+Math.random()*45, max:100, col:color, r:1.5+Math.random()*3});
+  }
+}
+
+function addLbl(x, y, txt, col) {
+  lbls.push({x, y, vy:-1.6, life:100, max:100, txt, col:col||'#ffd700'});
+}
+
+function flashScreen(col) {
+  // flash effect removed
+}
+
+// ══════════════════════════════════════════════
+//  INITIAL COIN LAYOUT
+// ══════════════════════════════════════════════
+function initCoins() {
+  coins = [];
+  const sp = CR * 2 + 2;
+
+  // Row 0 — on shelf surface (y = SY - CR)
+  for (let x = PMAX + CR + 4; x < SR - CR - 2; x += sp) {
+    const c = mkCoin(x + (Math.random()-.5)*2, SY - CR, rndType());
+    c.settled = true;
+    coins.push(c);
+  }
+  // Row 1 — offset half-step (brick pattern, y = SY - CR - sp)
+  for (let x = PMAX + CR + 4 + sp/2; x < SR - CR - 2; x += sp) {
+    if (coins.length >= 55) break;
+    const c = mkCoin(x + (Math.random()-.5)*2, SY - CR - sp + 2, rndType());
+    c.settled = true;
+    coins.push(c);
+  }
+  // Row 2 — shifted right (pile near win edge)
+  const x2start = PMAX + CR + 4 + (SR - PMAX) * 0.28;
+  for (let x = x2start; x < SR - CR - 2; x += sp) {
+    if (coins.length >= 70) break;
+    const c = mkCoin(x + (Math.random()-.5)*2, SY - CR - sp * 2 + 4, rndType());
+    c.settled = true;
+    coins.push(c);
+  }
+
+  // Sprinkle bonus coins into the pile
+  const bonusSlots = new Set();
+  while (bonusSlots.size < 7) bonusSlots.add(Math.floor(Math.random() * coins.length));
+  for (const i of bonusSlots) {
+    const bt = T[1 + Math.floor(Math.random() * (T.length - 1))];
+    coins[i].t = bt;
+    coins[i].v = bt.id === 'x' ? jackpot : bt.v;
+  }
+}
+
+// ══════════════════════════════════════════════
+//  PHYSICS
+// ══════════════════════════════════════════════
+function physStep() {
+  const fm = fever ? 2.8 : 1;
+
+  // Pusher oscillation
+  px += pv * fm;
+  if (px >= PMAX) { px = PMAX; pv = -Math.abs(pv); }
+  if (px <= PMIN) { px = PMIN; pv =  Math.abs(pv); }
+  const pushing = pv > 0;
+
+  // Integrate coins
+  for (const c of coins) {
+    if (c.settled) continue;
+    c.vy += 0.42;
+    c.x  += c.vx;
+    c.y  += c.vy;
+    c.vx *= 0.97;
+
+    if (c.y + CR >= SY) { c.y = SY - CR; c.vy *= -0.12; c.vx *= 0.82; if (Math.abs(c.vy) < 0.4) c.vy = 0; }
+    if (c.x - CR <  SL) { c.x = SL + CR; c.vx  = Math.abs(c.vx) * 0.3; }
+    if (c.y - CR <   0) { c.y = CR;       c.vy  = Math.abs(c.vy) * 0.5; }
+
+    if (Math.abs(c.vx) < 0.07 && Math.abs(c.vy) < 0.07 && c.y >= SY - CR - 1) {
+      c.vx = 0; c.vy = 0; c.settled = true;
+    }
+  }
+
+  // Pusher → coins
+  for (const c of coins) {
+    if (c.x - CR < px) {
+      c.x = px + CR;
+      if (pushing) { c.vx = Math.max(c.vx, pv * fm * 1.7); c.vy = (Math.random()-.5) * .5; c.settled = false; }
+    }
+  }
+
+  // Coin–coin separation
+  for (let i = 0; i < coins.length; i++) {
+    for (let j = i + 1; j < coins.length; j++) {
+      const a = coins[i], b = coins[j];
+      const dx = b.x-a.x, dy = b.y-a.y;
+      const d2 = dx*dx+dy*dy, md = CR*2;
+      if (d2 < md*md && d2 > 0.001) {
+        const d  = Math.sqrt(d2), ov = (md-d)/2;
+        const nx = dx/d, ny = dy/d;
+        if (!a.settled && !b.settled) {
+          a.x -= nx*ov; a.y -= ny*ov; b.x += nx*ov; b.y += ny*ov;
+          const rv = (b.vx-a.vx)*nx + (b.vy-a.vy)*ny;
+          if (rv < 0) { a.vx -= nx*rv*.35; a.vy -= ny*rv*.2; b.vx += nx*rv*.35; b.vy += ny*rv*.2; }
+        } else if (!a.settled && b.settled) {
+          a.x -= nx*ov*2; a.vx -= nx*(Math.abs(a.vx)+.5);
+        } else if (a.settled && !b.settled) {
+          b.x += nx*ov*2; b.vx += nx*(Math.abs(b.vx)+.5);
+        } else {
+          // Both settled: push b toward win edge
+          b.x += nx*ov; b.settled = false; b.vx += nx*.4;
+        }
+      }
+    }
+  }
+
+  // Win collection
+  const winners = [];
+  coins = coins.filter(c => { if (c.x + CR > SR) { winners.push(c); return false; } return true; });
+  for (const w of winners) {
+    const mult = fever ? 2 : 1;
+    const amt  = w.v * mult;
+    bal += amt; won += amt;
+    fmeter = Math.min(100, fmeter + amt / 160);
+    MC.saveBalance(bal);
+    addSparks(SR, w.y, w.t.hi, 16);
+    if (w.t.id === 'x') {
+      addLbl(SR-70, w.y-25, `🏆 JACKPOT!  +$${amt.toLocaleString()}`, '#fcd34d');
+      jackpot = 50000;
+      flashScreen('rgba(255,215,0,.55)');
+    } else if (w.t.id === 'r') {
+      addLbl(SR-60, w.y-20, `♦ RUBY!  +$${amt.toLocaleString()}`, w.t.hi);
+      if (amt >= 2000) flashScreen('rgba(220,60,60,.25)');
+    } else if (w.t.id === 'g') {
+      addLbl(SR-55, w.y-20, `★ GOLD!  +$${amt.toLocaleString()}`, w.t.hi);
+    } else {
+      addLbl(SR-40, w.y-18, `+$${amt.toLocaleString()}`, w.t.hi);
+    }
+  }
+
+  // Jackpot growth per drop (handled in doDrop)
+
+  // Particles + labels
+  parts = parts.filter(p => { p.life--; return p.life > 0; });
+  parts.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.06; });
+  lbls  = lbls.filter(l => { l.life--; return l.life > 0; });
+  lbls.forEach(l => { l.y += l.vy; });
+
+  // Fever timer
+  if (fever) {
+    feverT--;
+    if (feverT <= 0) { fever = false; feverCD = 1800; fmeter = 0; CV.classList.remove('fever'); }
+  } else if (feverCD > 0) { feverCD--; }
+  if (!fever && !fReady && fmeter >= 100 && feverCD === 0) fReady = true;
+
+  // Auto drop
+  if (autoOn) { autoT--; if (autoT <= 0) { autoT = fever ? 18 : 38; doDrop(); } }
+
+  // Bonus cooldown
+  if (bonusCD > 0) bonusCD--;
+}
+
+// ══════════════════════════════════════════════
+//  ACTIONS
+// ══════════════════════════════════════════════
+function doDrop(x) {
+  if (bal < COST || coins.length >= CMAX) return;
+  bal -= COST; spent += COST; drops++;
+  jackpot = Math.min(200000, jackpot + 15);
+  MC.saveBalance(bal);
+
+  const dropX = (x != null)
+    ? Math.max(PMAX + CR + 5, Math.min(SR - CR - 5, x))
+    : PMAX + CR + 8 + Math.random() * (SR - PMAX - CR * 3 - 16);
+
+  const isBonusDrop = (drops % 5 === 0);
+  coins.push(mkCoin(dropX, 14, isBonusDrop ? rndType(true) : rndType(), (Math.random()-.5)*1.4, .5));
+
+  // Bonus rain every 8th drop
+  if (drops % 8 === 0 && bonusCD === 0) {
+    bonusCD = 90;
+    addLbl(W/2 - 70, 75, '🎁 BONUS RAIN!', '#fbbf24');
+    for (let i = 0; i < 6; i++) {
+      setTimeout(() => {
+        if (coins.length >= CMAX) return;
+        const bx = PMAX + CR + 10 + Math.random() * (SR - PMAX - CR * 3 - 20);
+        coins.push(mkCoin(bx, 12, rndType(Math.random() < .65), (Math.random()-.5)*2, .5));
+      }, i * 120);
+    }
+  }
+
+  fmeter = Math.min(100, fmeter + 2.8);
+  if (!fever && !fReady && fmeter >= 100 && feverCD === 0) fReady = true;
+  updateUI();
+}
+
+function activateFever() {
+  if (!fReady && !fever) return;
+  fever = true; feverT = 480; fReady = false; feverCD = 0; fmeter = 100;
+  CV.classList.add('fever');
+  addLbl(W/2 - 60, 55, '🔥 FEVER MODE! 2× WIN!', '#ff7040');
+  // Free bonus coin shower
+  for (let i = 0; i < 12; i++) {
+    setTimeout(() => {
+      if (coins.length >= CMAX) return;
+      const bx = PMAX + CR + 10 + Math.random() * (SR - PMAX - CR * 3 - 20);
+      coins.push(mkCoin(bx, 12, rndType(true), (Math.random()-.5)*2, .5));
+    }, i * 55);
+  }
+}
+
+// ══════════════════════════════════════════════
+//  DRAW
+// ══════════════════════════════════════════════
+function draw() {
+  // Background
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, fever ? '#1c0904' : '#08081a');
+  bg.addColorStop(1, fever ? '#100503' : '#04040e');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+
+  // Drop zone subtle highlight
+  ctx.fillStyle = 'rgba(255,215,0,.022)';
+  ctx.fillRect(PMAX, 0, SR - PMAX, SY);
+
+  // Drop hint text
+  ctx.textAlign = 'center'; ctx.font = '12px Inter';
+  ctx.fillStyle = 'rgba(255,215,0,.2)';
+  ctx.fillText('▼  點擊畫面投幣  ▼', W / 2, 22);
+
+  // Win edge glow
+  const wg = ctx.createLinearGradient(SR - 28, 0, SR + 12, 0);
+  wg.addColorStop(0, 'transparent');
+  wg.addColorStop(1, fever ? 'rgba(255,80,30,.5)' : 'rgba(255,215,0,.38)');
+  ctx.fillStyle = wg; ctx.fillRect(SR - 28, 0, 40, SY + SHT);
+
+  // Win edge dashed line
+  ctx.setLineDash([5, 4]);
+  ctx.strokeStyle = fever ? 'rgba(255,80,30,.8)' : 'rgba(255,215,0,.7)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(SR, 0); ctx.lineTo(SR, SY); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // "WIN" rotated label
+  ctx.save(); ctx.translate(SR + 16, SY / 2); ctx.rotate(Math.PI / 2);
+  ctx.fillStyle = fever ? 'rgba(255,80,30,.65)' : 'rgba(255,215,0,.55)';
+  ctx.font = 'bold 11px Inter'; ctx.textAlign = 'center';
+  ctx.fillText('WIN', 0, 0); ctx.restore();
+
+  // Pusher body (machine casing)
+  const pb = ctx.createLinearGradient(SL - 8, 0, px, 0);
+  pb.addColorStop(0, fever ? '#200a04' : '#0c0c20');
+  pb.addColorStop(1, fever ? '#401408' : '#14142e');
+  ctx.fillStyle = pb;
+  ctx.fillRect(SL - 8, 2, px - (SL - 8), SY - 2);
+
+  // Pusher face
+  ctx.fillStyle = fever ? 'rgba(255,110,40,.7)' : 'rgba(110,110,210,.6)';
+  ctx.fillRect(px - 6, 10, 6, SY - 10);
+  ctx.fillStyle = fever ? 'rgba(255,170,90,.9)' : 'rgba(170,170,255,.85)';
+  ctx.fillRect(px - 2, 10, 2, SY - 10);
+
+  // Shelf platform
+  const sg = ctx.createLinearGradient(0, SY, 0, SY + SHT);
+  sg.addColorStop(0, fever ? '#281008' : '#121226');
+  sg.addColorStop(1, '#06060e');
+  ctx.fillStyle = sg;
+  ctx.fillRect(SL - 8, SY, SR - SL + 18, SHT);
+  ctx.strokeStyle = 'rgba(255,215,0,.16)'; ctx.lineWidth = 1;
+  ctx.strokeRect(SL - 8, SY, SR - SL + 18, SHT);
+  // Surface sheen
+  ctx.fillStyle = 'rgba(255,215,0,.065)';
+  ctx.fillRect(SL - 8, SY, SR - SL + 18, 3);
+
+  // Draw coins
+  for (const c of coins) drawCoin(c);
+
+  // Fever meter
+  drawFeverBar();
+
+  // Sparkle particles
+  for (const p of parts) {
+    ctx.globalAlpha = p.life / p.max;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r * (p.life / p.max), 0, Math.PI * 2);
+    ctx.fillStyle = p.col; ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // Floating labels
+  ctx.textAlign = 'left';
+  for (const l of lbls) {
+    ctx.globalAlpha = l.life / l.max;
+    ctx.font = 'bold 15px Inter';
+    ctx.fillStyle = l.col; ctx.shadowColor = l.col; ctx.shadowBlur = 9;
+    ctx.fillText(l.txt, l.x, l.y);
+    ctx.shadowBlur = 0;
+  }
+  ctx.globalAlpha = 1;
+
+  // Fever red pulse overlay
+  if (fever) {
+    const pulse = 0.04 + 0.025 * Math.sin(Date.now() * .013);
+    ctx.fillStyle = `rgba(255,65,15,${pulse})`;
+    ctx.fillRect(0, 0, W, H);
+  }
+}
+
+function drawCoin(c) {
+  const {x, y, t} = c;
+
+  // Outer glow for premium coins
+  if (t.id !== 'c') {
+    const gg = ctx.createRadialGradient(x, y, CR * .5, x, y, CR + 6);
+    gg.addColorStop(0, t.hi + '55'); gg.addColorStop(1, 'transparent');
+    ctx.beginPath(); ctx.arc(x, y, CR + 6, 0, Math.PI * 2);
+    ctx.fillStyle = gg; ctx.fill();
+  }
+
+  // Coin body gradient (lit from top-left)
+  const cg = ctx.createRadialGradient(x - CR*.32, y - CR*.35, 0, x, y, CR);
+  cg.addColorStop(0,   t.hi);
+  cg.addColorStop(.55, t.col);
+  cg.addColorStop(1,   t.lo);
+  ctx.beginPath(); ctx.arc(x, y, CR, 0, Math.PI * 2);
+  ctx.fillStyle = cg; ctx.fill();
+
+  // Edge ring
+  ctx.strokeStyle = t.hi + 'bb'; ctx.lineWidth = 1.5; ctx.stroke();
+
+  // Label
+  ctx.fillStyle = 'rgba(255,255,255,.9)';
+  ctx.font = `bold ${Math.round(CR * .9)}px Inter`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(t.lbl, x, y);
+  ctx.textBaseline = 'alphabetic';
+}
+
+function drawFeverBar() {
+  const bw = 152, bh = 13, bx = W - bw - 14, by = H - 52;
+
+  ctx.fillStyle = 'rgba(0,0,0,.6)';
+  ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 6); ctx.fill();
+
+  const fill = Math.min(1, fmeter / 100) * bw;
+  if (fill > 0) {
+    const fg = ctx.createLinearGradient(bx, 0, bx + bw, 0);
+    fg.addColorStop(0, '#ef4444'); fg.addColorStop(.5, '#f97316'); fg.addColorStop(1, '#fbbf24');
+    ctx.fillStyle = fg; ctx.beginPath(); ctx.roundRect(bx, by, fill, bh, 6); ctx.fill();
+  }
+
+  ctx.strokeStyle = fReady ? 'rgba(255,90,30,.9)' : 'rgba(255,255,255,.18)';
+  ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 6); ctx.stroke();
+
+  ctx.textAlign = 'right'; ctx.font = 'bold 11px Inter';
+  ctx.fillStyle = fReady ? '#ff7040' : fever ? '#ff9060' : 'rgba(255,255,255,.5)';
+  const lbl = fever ? `🔥 FEVER  ${Math.ceil(feverT / 60)}s`
+            : fReady ? '🔥 READY — 點擊 FEVER!'
+            : feverCD > 0 ? `冷卻 ${Math.ceil(feverCD / 60)}s`
+            : `FEVER  ${Math.floor(fmeter)}%`;
+  ctx.fillText(lbl, bx - 7, by + bh - 1);
+}
+
+// ══════════════════════════════════════════════
+//  UI UPDATE
+// ══════════════════════════════════════════════
+function updateUI() {
+  document.getElementById('balEl').textContent   = '$' + bal.toLocaleString('en-US');
+  document.getElementById('wonEl').textContent   = '$' + won.toLocaleString('en-US');
+  document.getElementById('jpEl').textContent    = '$' + jackpot.toLocaleString('en-US');
+  document.getElementById('spentEl').textContent = '$' + spent.toLocaleString('en-US');
+
+  const fb = document.getElementById('feverBtn');
+  fb.disabled = !fReady && !fever;
+  fb.classList.toggle('ready',  fReady && !fever);
+  fb.classList.toggle('active', fever);
+
+  document.getElementById('dropBtn').disabled = (bal < COST);
+}
+
+// ══════════════════════════════════════════════
+//  EVENTS
+// ══════════════════════════════════════════════
+CV.addEventListener('click', e => {
+  const r = CV.getBoundingClientRect();
+  const x = (e.clientX - r.left) * (W / r.width);
+  const y = (e.clientY - r.top)  * (H / r.height);
+  if (y < SY) { doDrop(x); updateUI(); }
+});
+
+CV.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const r = CV.getBoundingClientRect();
+  const x = (e.touches[0].clientX - r.left) * (W / r.width);
+  const y = (e.touches[0].clientY - r.top)  * (H / r.height);
+  if (y < SY) { doDrop(x); updateUI(); }
+}, {passive: false});
+
+document.getElementById('dropBtn').addEventListener('click', () => { doDrop(); updateUI(); });
+
+document.getElementById('autoBtn').addEventListener('click', function () {
+  autoOn = !autoOn; autoT = 0;
+  this.classList.toggle('on', autoOn);
+  this.textContent = autoOn ? '⏸ 停止自動' : '自動投幣';
+});
+
+document.getElementById('feverBtn').addEventListener('click', () => { activateFever(); updateUI(); });
+
+// ══════════════════════════════════════════════
+//  MAIN LOOP
+// ══════════════════════════════════════════════
+function loop() {
+  physStep();
+  draw();
+  updateUI();
+  requestAnimationFrame(loop);
+}
+
+bal = MC.loadBalance();
+initCoins();
+updateUI();
+loop();
+</script>
+</body>
+</html>

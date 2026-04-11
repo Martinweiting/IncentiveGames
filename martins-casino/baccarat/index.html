@@ -148,6 +148,7 @@
   <a href="../blackjack/">21 點</a>
   <a href="./" class="active">百家樂</a>
   <a href="../slots/">老虎機</a>
+  <a href="../roulette/">輪盤</a>
   <a href="../gacha/">🎪 扭蛋機</a>
 </nav>
 
@@ -203,7 +204,7 @@
 
     <div class="amount-row">
       <span class="amt-label">下注</span>
-      <input type="number" id="bet-input" class="amt-input" value="100" min="10" max="10000" step="10">
+      <input type="number" id="bet-input" class="amt-input" value="100" min="10" step="10">
     </div>
     <div class="chips-row">
       <button class="chip" onclick="addBet(10)">+10</button>
@@ -225,13 +226,11 @@
   </div>
 </main>
 
+<script src="../player.js"></script>
 <script>
 // ── Balance ──────────────────────────────────────────────
-function getCookie(k){return+((document.cookie.match('(?:^|; )'+k+'=([^;]*)')||[])[1]||0);}
-function setCookie(k,v){document.cookie=k+'='+v+';max-age=31536000;path=/';}
-let balance=(()=>{const v=getCookie('mc_chips');return v>0?v:1000;})();
-setCookie('mc_chips',balance);
-function saveBal(){setCookie('mc_chips',balance);document.getElementById('bal').textContent='$'+balance.toLocaleString('en-US');}
+let balance=MC.loadBalance();
+function saveBal(){MC.saveBalance(balance);document.getElementById('bal').textContent='$'+balance.toLocaleString('en-US');}
 saveBal();
 
 // ── Safe sound ───────────────────────────────────────────
@@ -273,7 +272,7 @@ function selectSide(s){
 function addBet(n){
   if(playing) return;
   const inp=document.getElementById('bet-input');
-  inp.value=Math.min(10000,Math.max(10,(+inp.value||0)+n));
+  inp.value=Math.max(10,(+inp.value||0)+n);
 }
 function setBetMax(){
   if(playing) return;
