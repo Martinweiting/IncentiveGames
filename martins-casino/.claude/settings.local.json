@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -l \"Martin's World\\\\|martinTitle\\\\|treasure\\\\|藏寶箱\" \"Z:/Program Files/ClaudeProject/MartinsCasino/martins-casino\"/**/*.html)"
+    ]
+  }
+}

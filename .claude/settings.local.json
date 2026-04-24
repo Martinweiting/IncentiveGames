@@ -12,7 +12,9 @@
       "WebFetch(domain:www.zapsplat.com)",
       "WebFetch(domain:freesound.org)",
       "WebFetch(domain:kenney.itch.io)",
-      "WebFetch(domain:quicksounds.com)"
+      "WebFetch(domain:quicksounds.com)",
+      "Bash(npm install *)",
+      "Bash(npm run *)"
     ]
   }
 }

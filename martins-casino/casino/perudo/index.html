@@ -194,7 +194,7 @@
 <div class="neb neb1"></div><div class="neb neb2"></div><div class="neb neb3"></div>
 
 <header class="hdr">
-  <a href="../" class="back-btn" id="back-btn">← 返回</a>
+  <a href="../../../dice-world/" class="back-btn" id="back-btn">← 返回</a>
   <div class="hdr-title">🌌 GALACTIC BLUFF</div>
   <div class="bal-block"><span class="bal-lbl">籌碼</span><span class="bal-amt" id="bal">$0</span></div>
 </header>
@@ -842,7 +842,7 @@ function endGame(){
     document.getElementById('modal').classList.remove('show');
     resetToSetup();
   };
-  document.getElementById('mbtn2').onclick=()=>{window.location.href='../'};
+  document.getElementById('mbtn2').onclick=()=>{window.location.href='../../../dice-world/'};
   document.getElementById('modal').classList.add('show');
 }
 
@@ -851,7 +851,7 @@ function resetToSetup(){
   document.getElementById('setup-screen').style.display='flex';
   document.getElementById('back-btn').textContent='← 返回';
   document.getElementById('back-btn').onclick=null;
-  document.getElementById('back-btn').href='../';
+  document.getElementById('back-btn').href='../../../dice-world/';
   updBal();
 }
 
