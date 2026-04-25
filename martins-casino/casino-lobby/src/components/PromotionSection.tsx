@@ -41,7 +41,7 @@ function PromoCard({ promo, index }: { promo: typeof PROMOTIONS[0]; index: numbe
       {/* Countdown */}
       <div className="mt-auto">
         <p className="section-label text-[9px] mb-2">活動倒數</p>
-        <Countdown targetDate={promo.targetDate} />
+        <Countdown targetTime={promo.targetDate.getTime()} />
       </div>
 
       {/* CTA */}

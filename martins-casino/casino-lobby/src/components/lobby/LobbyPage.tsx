@@ -1,31 +1,71 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import Countdown from '../Countdown';
 import {
+  avatarOptions,
+  avatarSourceUrl,
   gameCategories,
   games,
   heroStats,
-  leaderboard,
-  liveTables,
   navItems,
-  promotions,
+  spotlights,
+  treasureHint,
+  treasurePassword,
+  treasureReward,
+  welcomeCopy,
+  welcomeSubcopy,
+  type AppRoute,
+  type AvatarOption,
   type CoverTone,
   type GameItem,
-  type GameRibbon,
   type HeroStat,
-  type LiveTable,
+  type SpotlightItem,
 } from '../../data/lobbyData';
 import { useCountUp } from '../../hooks/useCountUp';
 import { useInView } from '../../hooks/useInView';
 import { useLobbyStore } from '../../store/useLobbyStore';
 import styles from './LobbyPage.module.css';
 
-export type AppRoute = '/' | '/games' | '/promotions' | '/leaderboard';
-
 interface LobbyPageProps {
   route: AppRoute;
   navigate: (route: AppRoute) => void;
 }
+
+interface TreasureMessage {
+  tone: 'idle' | 'success' | 'error';
+  text: string;
+}
+
+const COPY = {
+  logoHint: '\u9023\u6309\u4e09\u4e0b\u53ef\u958b\u555f\u85cf\u5bf6\u7bb1',
+  navLabel: '\u4e3b\u8981\u5c0e\u89bd',
+  goDirect: '\u76f4\u63a5\u524d\u5f80',
+  treasureTitle: "hearts2hearts \u7684\u85cf\u5bf6\u7bb1",
+  treasureSubtitle: '\u8f38\u5165\u5bc6\u8a9e\u5373\u53ef\u9818\u53d6\u96b1\u85cf\u5f69\u86cb\u734e\u52f5',
+  treasurePlaceholder: '\u8f38\u5165\u5bc6\u8a9e',
+  treasureButton: '\u958b\u555f\u5bf6\u7bb1',
+  treasureError: '\u5bc6\u8a9e\u932f\u8aa4\uff0c\u8acb\u518d\u8a66\u4e00\u6b21\u3002',
+  treasureSuccessPrefix: '\u606d\u559c\u89e3\u9396\u6210\u529f\uff0c\u5df2\u7372\u5f97 ',
+  heroPrimaryAction: '\u67e5\u770b\u4e09\u5927\u904a\u6232\u5206\u5340',
+  heroSecondaryAction: '\u6311\u9078\u982d\u50cf\u5716\u793a',
+  heroLink: "\u76f4\u63a5\u524d\u5f80 Martin's World \u5206\u7ad9",
+  gameEyebrow: 'Game Lobby',
+  gameTitle: '\u6cbf\u7528\u820a\u7248\u547d\u540d\u7684\u4e09\u5927\u5206\u5340',
+  gameCopy:
+    '\u65b0\u7248\u9996\u9801\u6539\u7528 React \u91cd\u88fd\u4ecb\u9762\u5448\u73fe\uff0c\u4f46\u5206\u985e\u540d\u7a31\u4ecd\u4fdd\u7559\u820a\u7248\u7684 CASINO\u3001\u9ab0\u5b50\u4e16\u754c\u3001\u724c\u5c40\u5929\u5730\uff0c\u4e26\u628a\u6d1e\u7a74\u63a2\u96aa\u6b63\u78ba\u4f75\u5165 CASINO\u3002',
+  summaryEyebrow: 'Zone Summary',
+  summaryTitle: '\u5206\u985e\u6574\u7406\u5b8c\u6210\u5f8c\u7684\u91cd\u9ede',
+  summaryCopy:
+    '\u9019\u4e00\u5340\u5feb\u901f\u8aaa\u660e\u6bcf\u500b\u5165\u53e3\u76ee\u524d\u7684\u5b9a\u4f4d\uff0c\u8b93\u73a9\u5bb6\u9032\u5165\u524d\u5c31\u77e5\u9053\u5404\u5206\u5340\u6536\u9304\u4e86\u54ea\u4e9b\u5167\u5bb9\u3002',
+  avatarEyebrow: 'Avatar Icons',
+  avatarTitle: '\u5927\u91cf\u7db2\u8def\u5716\u793a\u4efb\u4f60\u9078',
+  avatarCopy:
+    '\u982d\u50cf\u5716\u793a\u6539\u70ba\u53ef\u81ea\u7531\u6311\u9078\uff0c\u9078\u5b9a\u5f8c\u6703\u5373\u6642\u53cd\u6620\u5728\u53f3\u4e0a\u89d2\u5e33\u6236\u5361\u7247\u3002\u5716\u793a\u4f86\u6e90\u63a1\u7528\u7dda\u4e0a Twemoji SVG\u3002',
+  avatarCurrent: '\u76ee\u524d\u982d\u50cf',
+  avatarSource: '\u67e5\u770b\u5716\u793a\u4f86\u6e90',
+  footerCopy:
+    '\u65b0\u7248 React \u5927\u5ef3\u5df2\u53d6\u4ee3\u820a\u7248\u9996\u9801\uff0c\u4e26\u4fdd\u7559\u539f\u672c\u7684\u4e09\u5927\u5206\u5340\u547d\u540d\u3002',
+  footerHint: "\u5de6\u4e0a\u89d2 Martin's Casino \u9023\u9ede\u4e09\u4e0b\u53ef\u958b\u555f\u85cf\u5bf6\u7bb1\u5f69\u86cb\u3002",
+} as const;
 
 const sectionStagger = {
   hidden: { opacity: 0, y: 30 },
@@ -33,8 +73,8 @@ const sectionStagger = {
     opacity: 1,
     y: 0,
     transition: {
-      delay: 0.2 + index * 0.12,
-      duration: 0.7,
+      delay: 0.18 + index * 0.12,
+      duration: 0.72,
       ease: [0.22, 1, 0.36, 1],
     },
   }),
@@ -42,17 +82,8 @@ const sectionStagger = {
 
 const toneClassMap: Record<CoverTone, string> = {
   gold: styles.toneGold,
-  crimson: styles.toneCrimson,
-  emerald: styles.toneEmerald,
   violet: styles.toneViolet,
   azure: styles.toneAzure,
-  copper: styles.toneCopper,
-};
-
-const ribbonClassMap: Record<GameRibbon, string> = {
-  hot: styles.ribbonHot,
-  new: styles.ribbonNew,
-  live: styles.ribbonLive,
 };
 
 function formatCurrency(value: number) {
@@ -66,7 +97,14 @@ function formatHeroStat(value: number, prefix = '', suffix = '') {
 function Navbar({
   route,
   navigate,
-}: Pick<LobbyPageProps, 'route' | 'navigate'>) {
+  onLogoClick,
+  onProfileClick,
+  avatar,
+}: Pick<LobbyPageProps, 'route' | 'navigate'> & {
+  onLogoClick: () => void;
+  onProfileClick: () => void;
+  avatar: AvatarOption;
+}) {
   const { profile } = useLobbyStore();
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -84,11 +122,11 @@ function Navbar({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
     >
-      <button className={styles.logo} type="button" onClick={() => navigate('/')}>
+      <button className={styles.logo} type="button" onClick={onLogoClick} title={COPY.logoHint}>
         Martin&apos;s Casino
       </button>
 
-      <nav className={styles.navLinks} aria-label="主要導覽">
+      <nav className={styles.navLinks} aria-label={COPY.navLabel}>
         {navItems.map((item) => {
           const isActive = route === item.route;
           return (
@@ -104,14 +142,16 @@ function Navbar({
         })}
       </nav>
 
-      <div className={styles.accountCard}>
-        <div className={styles.avatar}>{profile.initials}</div>
-        <div className={styles.accountMeta}>
+      <button className={styles.accountCard} type="button" onClick={onProfileClick}>
+        <span className={styles.avatarWrap}>
+          <img className={styles.avatarImage} src={avatar.src} alt={avatar.label} loading="lazy" />
+        </span>
+        <span className={styles.accountMeta}>
           <span className={styles.accountName}>{profile.name}</span>
           <span className={styles.accountTier}>{profile.tier}</span>
-        </div>
-        <div className={styles.accountBalance}>{formatCurrency(profile.balance)}</div>
-      </div>
+        </span>
+        <span className={styles.accountBalance}>{formatCurrency(profile.balance)}</span>
+      </button>
     </motion.header>
   );
 }
@@ -120,15 +160,15 @@ function StatCard({ stat, index, trigger }: { stat: HeroStat; index: number; tri
   const value = useCountUp({ end: stat.value, delay: index * 160, trigger });
 
   return (
-    <div className={styles.statCard}>
+    <article className={styles.statCard}>
       <span className={styles.statValue}>{formatHeroStat(value, stat.prefix, stat.suffix)}</span>
       <span className={styles.statLabel}>{stat.label}</span>
-    </div>
+    </article>
   );
 }
 
 function GameCard({ game }: { game: GameItem }) {
-  const { ref, isInView } = useInView<HTMLArticleElement>({
+  const { ref, isInView } = useInView<HTMLElement>({
     threshold: 0.18,
     rootMargin: '0px 0px -8% 0px',
   });
@@ -142,24 +182,28 @@ function GameCard({ game }: { game: GameItem }) {
       transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
       whileHover={{ scale: 1.02 }}
     >
-      {game.ribbon ? (
-        <span className={`${styles.cardRibbon} ${ribbonClassMap[game.ribbon]}`}>
-          {game.ribbon.toUpperCase()}
-        </span>
-      ) : null}
-
       <div className={`${styles.coverArt} ${toneClassMap[game.tone]}`}>
         <div className={styles.coverGlow} />
         <div className={styles.coverFrame} />
+        <div className={styles.coverLabel}>{game.name}</div>
+        <div className={styles.coverBadge}>{game.badge}</div>
       </div>
 
       <div className={styles.cardBody}>
         <div className={styles.cardHeading}>
           <h3 className={styles.gameName}>{game.name}</h3>
-          <span className={styles.typeBadge}>{game.badge}</span>
+          <span className={styles.statusBadge}>{game.status}</span>
         </div>
 
-        {game.rtp ? <p className={styles.rtp}>RTP {game.rtp}</p> : <p className={styles.rtpPlaceholder}>高端私人桌體驗</p>}
+        <p className={styles.cardDescription}>{game.description}</p>
+
+        <div className={styles.detailChips}>
+          {game.details.map((detail) => (
+            <span key={detail} className={styles.detailChip}>
+              {detail}
+            </span>
+          ))}
+        </div>
 
         <button
           className={styles.playButton}
@@ -168,52 +212,149 @@ function GameCard({ game }: { game: GameItem }) {
             window.location.href = game.href;
           }}
         >
-          立即遊玩
+          {game.buttonLabel}
         </button>
       </div>
     </motion.article>
   );
 }
 
-function LiveCard({ table }: { table: LiveTable }) {
+function SpotlightCard({ item }: { item: SpotlightItem }) {
   return (
-    <article className={styles.liveCard}>
-      <span className={styles.liveBadge}>
-        <span className={styles.liveDot} />
-        Live
-      </span>
-
-      <div className={`${styles.liveDealer} ${toneClassMap[table.tone]}`}>
-        <div className={styles.dealerAura} />
-        <div className={styles.dealerHead} />
-        <div className={styles.dealerBody} />
+    <article className={styles.spotlightCard}>
+      <div className={`${styles.spotlightTone} ${toneClassMap[item.tone]}`}>
+        <span className={styles.spotlightName}>{item.name}</span>
       </div>
-
-      <div className={styles.liveMeta}>
-        <h3 className={styles.liveName}>{table.name}</h3>
-        <div className={styles.liveDetails}>
-          <span>玩家 {table.players}</span>
-          <span>最低下注 {formatCurrency(table.minBet)}</span>
-        </div>
+      <div className={styles.spotlightBody}>
+        <span className={styles.spotlightStat}>{item.stat}</span>
+        <h3 className={styles.spotlightHeadline}>{item.headline}</h3>
+        <p className={styles.spotlightSummary}>{item.summary}</p>
+        <a className={styles.spotlightLink} href={item.href}>
+          {COPY.goDirect}
+        </a>
       </div>
     </article>
+  );
+}
+
+function AvatarCard({
+  option,
+  selected,
+  onSelect,
+}: {
+  option: AvatarOption;
+  selected: boolean;
+  onSelect: (avatarId: string) => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={`${styles.avatarCard} ${selected ? styles.avatarCardSelected : ''}`}
+      onClick={() => onSelect(option.id)}
+      title={option.label}
+    >
+      <img className={styles.avatarCardImage} src={option.src} alt={option.label} loading="lazy" />
+      <span className={styles.avatarCardLabel}>{option.label}</span>
+    </button>
+  );
+}
+
+function TreasureModal({
+  open,
+  code,
+  message,
+  onCodeChange,
+  onClose,
+  onSubmit,
+}: {
+  open: boolean;
+  code: string;
+  message: TreasureMessage;
+  onCodeChange: (value: string) => void;
+  onClose: () => void;
+  onSubmit: () => void;
+}) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const timer = window.setTimeout(() => inputRef.current?.focus(), 220);
+    return () => window.clearTimeout(timer);
+  }, [open]);
+
+  return (
+    <div
+      className={`${styles.treasureOverlay} ${open ? styles.treasureOverlayOpen : ''}`}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <div className={styles.treasureBox}>
+        <button className={styles.treasureClose} type="button" onClick={onClose}>
+          ✕
+        </button>
+        <span className={styles.treasureIcon}>💝</span>
+        <h2 className={styles.treasureTitle}>{COPY.treasureTitle}</h2>
+        <p className={styles.treasureSubtitle}>{COPY.treasureSubtitle}</p>
+        <p className={styles.treasureHint}>{treasureHint}</p>
+
+        <input
+          ref={inputRef}
+          className={styles.treasureInput}
+          type="text"
+          value={code}
+          placeholder={COPY.treasurePlaceholder}
+          maxLength={20}
+          autoComplete="off"
+          onChange={(event) => onCodeChange(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') onSubmit();
+          }}
+        />
+
+        <button className={styles.treasureButton} type="button" onClick={onSubmit}>
+          {COPY.treasureButton}
+        </button>
+
+        <p
+          className={`${styles.treasureMessage} ${
+            message.tone === 'success'
+              ? styles.treasureMessageSuccess
+              : message.tone === 'error'
+                ? styles.treasureMessageError
+                : ''
+          }`}
+        >
+          {message.text}
+        </p>
+      </div>
+    </div>
   );
 }
 
 export default function LobbyPage({ route, navigate }: LobbyPageProps) {
   const heroRef = useRef<HTMLElement | null>(null);
   const gamesRef = useRef<HTMLElement | null>(null);
-  const promotionsRef = useRef<HTMLElement | null>(null);
-  const leaderboardRef = useRef<HTMLElement | null>(null);
-  const { activeCategory, setActiveCategory, syncProfile } = useLobbyStore();
+  const avatarsRef = useRef<HTMLElement | null>(null);
+  const logoClickCountRef = useRef(0);
+  const logoClickTimerRef = useRef<number | null>(null);
+  const { activeCategory, profile, applyTreasureReward, setActiveCategory, setAvatar, syncProfile } = useLobbyStore();
   const { ref: statsRef, isInView: statsVisible } = useInView<HTMLDivElement>({
-    threshold: 0.35,
+    threshold: 0.32,
   });
+  const [treasureOpen, setTreasureOpen] = useState(false);
+  const [treasureCode, setTreasureCode] = useState('');
+  const [treasureMessage, setTreasureMessage] = useState<TreasureMessage>({ tone: 'idle', text: '' });
 
   const filteredGames = useMemo(() => {
     if (activeCategory === 'all') return games;
     return games.filter((game) => game.category === activeCategory);
   }, [activeCategory]);
+
+  const currentAvatar = useMemo(
+    () => avatarOptions.find((option) => option.id === profile.avatarId) ?? avatarOptions[0]!,
+    [profile.avatarId]
+  );
 
   useEffect(() => {
     syncProfile();
@@ -223,19 +364,75 @@ export default function LobbyPage({ route, navigate }: LobbyPageProps) {
     const routeTargets: Record<AppRoute, HTMLElement | null> = {
       '/': heroRef.current,
       '/games': gamesRef.current,
-      '/promotions': promotionsRef.current,
-      '/leaderboard': leaderboardRef.current,
+      '/avatars': avatarsRef.current,
     };
 
     routeTargets[route]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [route]);
+
+  useEffect(() => {
+    return () => {
+      if (logoClickTimerRef.current) {
+        window.clearTimeout(logoClickTimerRef.current);
+      }
+    };
+  }, []);
+
+  const openTreasure = () => {
+    setTreasureCode('');
+    setTreasureMessage({ tone: 'idle', text: '' });
+    setTreasureOpen(true);
+  };
+
+  const handleLogoClick = () => {
+    logoClickCountRef.current += 1;
+
+    if (logoClickTimerRef.current) {
+      window.clearTimeout(logoClickTimerRef.current);
+    }
+
+    if (logoClickCountRef.current >= 3) {
+      logoClickCountRef.current = 0;
+      openTreasure();
+      return;
+    }
+
+    logoClickTimerRef.current = window.setTimeout(() => {
+      logoClickCountRef.current = 0;
+      navigate('/');
+    }, 260);
+  };
+
+  const handleTreasureSubmit = () => {
+    if (treasureCode.trim() !== treasurePassword) {
+      setTreasureMessage({ tone: 'error', text: COPY.treasureError });
+      setTreasureCode('');
+      return;
+    }
+
+    const result = applyTreasureReward(treasureReward);
+    setTreasureMessage({
+      tone: result.ok ? 'success' : 'error',
+      text: result.ok ? `${COPY.treasureSuccessPrefix}${formatCurrency(treasureReward)} \u7c4c\u78bc\u3002` : result.message,
+    });
+
+    if (result.ok) {
+      syncProfile();
+    }
+  };
 
   return (
     <div className={styles.pageShell}>
       <div className={styles.backgroundVeil} />
       <div className={styles.backgroundPattern} />
 
-      <Navbar route={route} navigate={navigate} />
+      <Navbar
+        route={route}
+        navigate={navigate}
+        onLogoClick={handleLogoClick}
+        onProfileClick={() => navigate('/avatars')}
+        avatar={currentAvatar}
+      />
 
       <main className={styles.main}>
         <motion.section
@@ -247,16 +444,21 @@ export default function LobbyPage({ route, navigate }: LobbyPageProps) {
           custom={0}
         >
           <div className={styles.heroContent}>
-            <span className={styles.kicker}>Macau Luxury Private Hall</span>
-            <h1 className={styles.heroTitle}>黑金大廳，為高額玩家而設。</h1>
-            <p className={styles.heroSubtitle}>
-              以深色大理石、金線細節與霧面玻璃質感重塑大廳首頁，讓每一次進場都像步入私人賭廳。
-            </p>
-            <button className={styles.ctaButton} type="button" onClick={() => navigate('/games')}>
-              立即探索桌台
-            </button>
-            <a className={styles.secondaryLink} href="../">
-              返回 Martin&apos;s World
+            <span className={styles.kicker}>React Lobby Remake</span>
+            <h1 className={styles.heroTitle}>{welcomeCopy}</h1>
+            <p className={styles.heroSubtitle}>{welcomeSubcopy}</p>
+
+            <div className={styles.heroActions}>
+              <button className={styles.ctaButton} type="button" onClick={() => navigate('/games')}>
+                {COPY.heroPrimaryAction}
+              </button>
+              <button className={styles.secondaryButton} type="button" onClick={() => navigate('/avatars')}>
+                {COPY.heroSecondaryAction}
+              </button>
+            </div>
+
+            <a className={styles.secondaryLink} href="./martins-casino/">
+              {COPY.heroLink}
             </a>
           </div>
 
@@ -278,10 +480,10 @@ export default function LobbyPage({ route, navigate }: LobbyPageProps) {
         >
           <div className={styles.sectionHeader}>
             <div>
-              <span className={styles.sectionEyebrow}>Game Collection</span>
-              <h2 className={styles.sectionTitle}>精選遊戲櫥窗</h2>
+              <span className={styles.sectionEyebrow}>{COPY.gameEyebrow}</span>
+              <h2 className={styles.sectionTitle}>{COPY.gameTitle}</h2>
             </div>
-            <p className={styles.sectionCopy}>從高返還老虎機到 VIP 私人桌，所有卡片皆支援切換與動態進場。</p>
+            <p className={styles.sectionCopy}>{COPY.gameCopy}</p>
           </div>
 
           <div className={styles.tabs}>
@@ -305,9 +507,9 @@ export default function LobbyPage({ route, navigate }: LobbyPageProps) {
             <motion.div
               key={activeCategory}
               className={styles.gamesGrid}
-              initial={{ opacity: 0, y: 14 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
+              exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.28, ease: 'easeOut' }}
             >
               {filteredGames.map((game) => (
@@ -327,76 +529,59 @@ export default function LobbyPage({ route, navigate }: LobbyPageProps) {
         >
           <div className={styles.sectionHeader}>
             <div>
-              <span className={styles.sectionEyebrow}>Live Salon</span>
-              <h2 className={styles.sectionTitle}>真人娛樂專區</h2>
+              <span className={styles.sectionEyebrow}>{COPY.summaryEyebrow}</span>
+              <h2 className={styles.sectionTitle}>{COPY.summaryTitle}</h2>
             </div>
-            <p className={styles.sectionCopy}>橫向滾動展示 3.5 張卡片，讓玩家一眼感受到尚有更多桌台可探索。</p>
+            <p className={styles.sectionCopy}>{COPY.summaryCopy}</p>
           </div>
 
-          <div className={styles.liveRail}>
-            {liveTables.map((table) => (
-              <LiveCard key={table.id} table={table} />
+          <div className={styles.spotlightGrid}>
+            {spotlights.map((item) => (
+              <SpotlightCard key={item.id} item={item} />
             ))}
           </div>
         </motion.section>
 
         <motion.section
-          ref={promotionsRef}
+          ref={avatarsRef}
           className={styles.sectionBlock}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, amount: 0.2 }}
+          viewport={{ once: true, amount: 0.12 }}
           variants={sectionStagger}
           custom={3}
         >
           <div className={styles.sectionHeader}>
             <div>
-              <span className={styles.sectionEyebrow}>Privileges</span>
-              <h2 className={styles.sectionTitle}>限時促銷與禮遇</h2>
+              <span className={styles.sectionEyebrow}>{COPY.avatarEyebrow}</span>
+              <h2 className={styles.sectionTitle}>{COPY.avatarTitle}</h2>
             </div>
-            <p className={styles.sectionCopy}>倒數計時每秒更新，搭配雙欄促銷版位與金色邊框裝飾線。</p>
+            <p className={styles.sectionCopy}>{COPY.avatarCopy}</p>
           </div>
 
-          <div className={styles.promoGrid}>
-            {promotions.map((promotion) => (
-              <article key={promotion.id} className={styles.promoCard}>
-                <span className={styles.promoHighlight}>{promotion.highlight}</span>
-                <h3 className={styles.promoTitle}>{promotion.title}</h3>
-                <p className={styles.promoCopy}>{promotion.description}</p>
-                <Countdown targetTime={promotion.endsAt} />
-              </article>
-            ))}
-          </div>
-        </motion.section>
+          <div className={styles.avatarShowcase}>
+            <aside className={styles.avatarPreview}>
+              <span className={styles.avatarPreviewLabel}>{COPY.avatarCurrent}</span>
+              <img className={styles.avatarPreviewImage} src={currentAvatar.src} alt={currentAvatar.label} loading="lazy" />
+              <strong className={styles.avatarPreviewName}>{currentAvatar.label}</strong>
+              <span className={styles.avatarPreviewMeta}>
+                {profile.name} · {profile.tier}
+              </span>
+              <a className={styles.avatarSource} href={avatarSourceUrl} target="_blank" rel="noreferrer">
+                {COPY.avatarSource}
+              </a>
+            </aside>
 
-        <motion.section
-          ref={leaderboardRef}
-          className={styles.sectionBlock}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.2 }}
-          variants={sectionStagger}
-          custom={4}
-        >
-          <div className={styles.sectionHeader}>
-            <div>
-              <span className={styles.sectionEyebrow}>Leaderboard</span>
-              <h2 className={styles.sectionTitle}>本週贏家 Top 5</h2>
+            <div className={styles.avatarGrid}>
+              {avatarOptions.map((option) => (
+                <AvatarCard
+                  key={option.id}
+                  option={option}
+                  selected={option.id === currentAvatar.id}
+                  onSelect={setAvatar}
+                />
+              ))}
             </div>
-            <p className={styles.sectionCopy}>第一名帶有特殊金色光暈強調，其餘列維持整齊的數字與金額對齊。</p>
-          </div>
-
-          <div className={styles.leaderboardList}>
-            {leaderboard.map((entry) => (
-              <article
-                key={entry.rank}
-                className={`${styles.leaderboardItem} ${entry.rank === 1 ? styles.leaderboardChampion : ''}`}
-              >
-                <span className={styles.leaderboardRank}>{entry.rank}</span>
-                <span className={styles.leaderboardName}>{entry.name}</span>
-                <span className={styles.leaderboardPrize}>{formatCurrency(entry.prize)}</span>
-              </article>
-            ))}
           </div>
         </motion.section>
       </main>
@@ -404,22 +589,19 @@ export default function LobbyPage({ route, navigate }: LobbyPageProps) {
       <footer className={styles.footer}>
         <div>
           <div className={styles.footerLogo}>Martin&apos;s Casino</div>
-          <p className={styles.footerCopy}>© 2026 Martin&apos;s Casino. All rights reserved.</p>
+          <p className={styles.footerCopy}>{COPY.footerCopy}</p>
         </div>
-        <p className={styles.footerResponsible}>請理性娛樂，未滿十八歲請勿使用本平台。</p>
-        <div className={styles.footerLinks}>
-          <a href="../">World</a>
-          <a href="/" onClick={(event) => event.preventDefault()}>
-            Instagram
-          </a>
-          <a href="/" onClick={(event) => event.preventDefault()}>
-            X
-          </a>
-          <a href="/" onClick={(event) => event.preventDefault()}>
-            Discord
-          </a>
-        </div>
+        <p className={styles.footerResponsible}>{COPY.footerHint}</p>
       </footer>
+
+      <TreasureModal
+        open={treasureOpen}
+        code={treasureCode}
+        message={treasureMessage}
+        onCodeChange={setTreasureCode}
+        onClose={() => setTreasureOpen(false)}
+        onSubmit={handleTreasureSubmit}
+      />
     </div>
   );
 }

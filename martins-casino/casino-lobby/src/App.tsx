@@ -1,7 +1,8 @@
 import { HashRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
-import LobbyPage, { type AppRoute } from './components/lobby/LobbyPage';
+import LobbyPage from './components/lobby/LobbyPage';
+import { type AppRoute } from './data/lobbyData';
 
-const APP_ROUTES = ['/', '/games', '/promotions', '/leaderboard'] as const;
+const APP_ROUTES = ['/', '/games', '/avatars'] as const;
 
 function normalizeRoute(pathname: string): AppRoute {
   return APP_ROUTES.includes(pathname as AppRoute) ? (pathname as AppRoute) : '/';
@@ -21,8 +22,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<RoutedLobby />} />
         <Route path="/games" element={<RoutedLobby />} />
-        <Route path="/promotions" element={<RoutedLobby />} />
-        <Route path="/leaderboard" element={<RoutedLobby />} />
+        <Route path="/avatars" element={<RoutedLobby />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </HashRouter>
