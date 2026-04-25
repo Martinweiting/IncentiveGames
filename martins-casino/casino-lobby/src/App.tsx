@@ -1,44 +1,30 @@
-import { useEffect, useMemo, useState } from 'react';
+import { HashRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import LobbyPage, { type AppRoute } from './components/lobby/LobbyPage';
 
 const APP_ROUTES = ['/', '/games', '/promotions', '/leaderboard'] as const;
-const ROUTE_CHANGE_EVENT = 'casino:lobby-route-change';
 
 function normalizeRoute(pathname: string): AppRoute {
   return APP_ROUTES.includes(pathname as AppRoute) ? (pathname as AppRoute) : '/';
 }
 
-function readCurrentRoute(): AppRoute {
-  return normalizeRoute(window.location.pathname);
+function RoutedLobby() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const route = normalizeRoute(location.pathname);
+
+  return <LobbyPage route={route} navigate={(nextRoute) => navigate(nextRoute)} />;
 }
 
 export default function App() {
-  const [route, setRoute] = useState<AppRoute>(() => readCurrentRoute());
-
-  useEffect(() => {
-    const syncRoute = () => setRoute(readCurrentRoute());
-
-    window.addEventListener('popstate', syncRoute);
-    window.addEventListener(ROUTE_CHANGE_EVENT, syncRoute);
-
-    return () => {
-      window.removeEventListener('popstate', syncRoute);
-      window.removeEventListener(ROUTE_CHANGE_EVENT, syncRoute);
-    };
-  }, []);
-
-  const navigate = useMemo(
-    () => (nextRoute: AppRoute) => {
-      if (nextRoute === route) {
-        window.dispatchEvent(new Event(ROUTE_CHANGE_EVENT));
-        return;
-      }
-
-      window.history.pushState({}, '', nextRoute);
-      window.dispatchEvent(new Event(ROUTE_CHANGE_EVENT));
-    },
-    [route]
+  return (
+    <HashRouter>
+      <Routes>
+        <Route path="/" element={<RoutedLobby />} />
+        <Route path="/games" element={<RoutedLobby />} />
+        <Route path="/promotions" element={<RoutedLobby />} />
+        <Route path="/leaderboard" element={<RoutedLobby />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </HashRouter>
   );
-
-  return <LobbyPage route={route} navigate={navigate} />;
 }

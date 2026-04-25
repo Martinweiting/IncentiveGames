@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Martin's Casino - 洞穴探險</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --gold:#ffd56a;--gold-dim:#a07a28;--bg:#070b11;--surface:#101722;--surface-2:#151f2d;--surface-3:#1a2535;
+      --text:#e3d7bf;--text-dim:#8a7f6f;--safe:#71f2b8;--safe-dim:#239d71;--danger:#ff6f7f;--danger-dim:#a54254;
+      --stone:#77c6ff;--stone-dim:#2f7da5;--amber:#ffb347;
+    }
+    body{
+      min-height:100vh;overflow-x:hidden;color:var(--text);font-family:'Inter','Microsoft JhengHei',sans-serif;
+      background:
+        radial-gradient(circle at 18% 18%,rgba(119,198,255,.10),transparent 24%),
+        radial-gradient(circle at 82% 15%,rgba(255,179,71,.08),transparent 28%),
+        radial-gradient(circle at 50% 0%,rgba(113,242,184,.06),transparent 26%),
+        linear-gradient(180deg,#06090f 0%,#09111a 46%,#060910 100%);
+    }
+
+    .star{position:fixed;background:#fff;border-radius:50%;animation:twinkle var(--d,3.6s) ease-in-out infinite;opacity:0;pointer-events:none;z-index:0}
+    @keyframes twinkle{0%,100%{opacity:0;transform:scale(.55)}50%{opacity:var(--o,.4);transform:scale(1)}}
+    @keyframes glow{0%,100%{box-shadow:0 0 0 rgba(113,242,184,0)}50%{box-shadow:0 0 24px rgba(113,242,184,.18)}}
+    @keyframes pulse{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+    @keyframes balup{0%{color:var(--safe);transform:scale(1.1)}100%{color:var(--gold);transform:scale(1)}}
+    @keyframes baldown{0%{color:var(--danger);transform:scale(1.07)}100%{color:var(--gold);transform:scale(1)}}
+
+    .hdr{
+      position:sticky;top:0;z-index:15;display:flex;align-items:center;justify-content:space-between;gap:16px;
+      padding:14px 26px;background:rgba(5,9,15,.86);border-bottom:1px solid rgba(255,255,255,.06);backdrop-filter:blur(14px)
+    }
+    .back-btn{color:var(--text-dim);text-decoration:none;font-size:13px;font-weight:600;letter-spacing:.3px;transition:color .2s}
+    .back-btn:hover{color:var(--gold)}
+    .hdr-title{
+      font-family:'Playfair Display',serif;font-size:clamp(16px,2.8vw,22px);font-weight:900;letter-spacing:3px;
+      color:var(--gold);text-shadow:0 0 28px rgba(255,213,106,.18);text-align:center
+    }
+    .bal-block{min-width:116px;display:flex;flex-direction:column;align-items:flex-end;cursor:pointer;transition:opacity .2s}
+    .bal-block:hover{opacity:.85}
+    .bal-nick{font-size:11px;color:var(--text-dim);margin-bottom:2px}
+    .bal-lbl{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1.7px}
+    .bal-amt{font-size:clamp(16px,3vw,23px);font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}
+    .bal-amt.up{animation:balup .45s ease}
+    .bal-amt.down{animation:baldown .45s ease}
+
+    .wrap{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:34px 20px 84px}
+    .hero{
+      display:flex;justify-content:space-between;align-items:end;gap:24px;flex-wrap:wrap;margin-bottom:26px
+    }
+    .hero-copy h1{
+      font-family:'Playfair Display',serif;font-size:clamp(34px,7vw,68px);line-height:.94;letter-spacing:5px;
+      color:var(--gold);text-shadow:0 0 36px rgba(255,213,106,.18)
+    }
+    .hero-copy p{margin-top:12px;font-size:12px;color:var(--text-dim);letter-spacing:3px;line-height:1.7}
+    .hero-pills{display:flex;gap:10px;flex-wrap:wrap}
+    .hero-pill{
+      padding:9px 14px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+      color:var(--text-dim);font-size:11px;letter-spacing:1.5px;text-transform:uppercase
+    }
+
+    .layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(320px,.9fr);gap:22px;align-items:start}
+    .panel{
+      position:relative;background:linear-gradient(180deg,rgba(18,27,40,.92),rgba(10,15,23,.94));
+      border:1px solid rgba(255,255,255,.07);border-radius:30px;box-shadow:0 22px 80px rgba(0,0,0,.42);overflow:hidden
+    }
+    .panel::before{
+      content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(119,198,255,.08),transparent 40%,rgba(255,213,106,.06) 100%);
+      opacity:.9;pointer-events:none
+    }
+
+    .expedition{padding:24px}
+    .expedition-top{display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+    .phase{
+      display:inline-flex;align-items:center;gap:10px;padding:10px 14px;border-radius:999px;background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.08);font-size:12px;color:var(--text-dim);letter-spacing:1.3px;text-transform:uppercase
+    }
+    .phase-dot{width:9px;height:9px;border-radius:50%;background:var(--stone);box-shadow:0 0 16px rgba(119,198,255,.45)}
+    .phase.live .phase-dot{background:var(--safe);box-shadow:0 0 16px rgba(113,242,184,.5)}
+    .phase.fail .phase-dot{background:var(--danger);box-shadow:0 0 16px rgba(255,111,127,.46)}
+    .phase.win .phase-dot{background:var(--gold);box-shadow:0 0 16px rgba(255,213,106,.48)}
+    .depth-note{font-size:12px;color:var(--text-dim)}
+
+    .cave-stage{
+      position:relative;padding:24px;border-radius:26px;border:1px solid rgba(255,255,255,.06);
+      background:
+        radial-gradient(circle at 50% 18%,rgba(113,242,184,.11),transparent 28%),
+        linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.015));
+      overflow:hidden
+    }
+    .cave-stage::after{
+      content:'';position:absolute;left:10%;right:10%;bottom:-42px;height:120px;border-radius:50%;
+      background:radial-gradient(circle,rgba(0,0,0,.42),transparent 68%);pointer-events:none
+    }
+    .payout-label{font-size:11px;color:var(--text-dim);letter-spacing:3px;text-transform:uppercase;text-align:center}
+    .payout-value{
+      margin-top:10px;text-align:center;font-size:clamp(46px,9vw,94px);font-weight:800;line-height:1;
+      color:var(--safe);font-variant-numeric:tabular-nums;text-shadow:0 0 34px rgba(113,242,184,.18)
+    }
+    .multiplier-line{
+      margin-top:10px;text-align:center;font-size:14px;font-weight:700;color:var(--gold);letter-spacing:.4px
+    }
+    .subline{
+      margin-top:8px;text-align:center;font-size:12px;color:var(--text-dim);line-height:1.7
+    }
+    .route-track{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:10px;margin-top:24px}
+    .route-node{
+      position:relative;padding:12px 0;border-radius:18px;text-align:center;background:rgba(5,9,15,.38);
+      border:1px solid rgba(255,255,255,.06);font-size:12px;color:var(--text-dim);font-weight:700
+    }
+    .route-node::before{
+      content:'';position:absolute;left:50%;top:12px;transform:translateX(-50%);width:10px;height:10px;border-radius:50%;
+      background:rgba(255,255,255,.16)
+    }
+    .route-node.done{border-color:rgba(113,242,184,.28);background:rgba(113,242,184,.10);color:var(--safe)}
+    .route-node.done::before{background:var(--safe);box-shadow:0 0 14px rgba(113,242,184,.48)}
+    .route-node.current{border-color:rgba(255,213,106,.34);background:rgba(255,213,106,.09);color:var(--gold);animation:glow 2.3s ease-in-out infinite}
+    .route-node.current::before{background:var(--gold);box-shadow:0 0 14px rgba(255,213,106,.46)}
+    .route-node.dead{border-color:rgba(255,111,127,.26);background:rgba(255,111,127,.08);color:var(--danger)}
+    .route-node.dead::before{background:var(--danger)}
+
+    .section-head{display:flex;justify-content:space-between;align-items:center;gap:14px;margin:20px 0 14px}
+    .section-head h2{font-size:12px;color:var(--text-dim);letter-spacing:2.5px;text-transform:uppercase}
+    .section-head span{font-size:12px;color:var(--text-dim)}
+
+    .option-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .option-card{
+      position:relative;padding:18px 18px 16px;border-radius:22px;border:1px solid rgba(255,255,255,.07);
+      background:rgba(5,9,15,.35);cursor:pointer;text-align:left;transition:transform .18s,filter .18s,border-color .18s,background .18s
+    }
+    .option-card:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.04);border-color:rgba(255,213,106,.28)}
+    .option-card:disabled{cursor:default}
+    .option-card.selected{border-color:rgba(255,213,106,.34);background:rgba(255,213,106,.08)}
+    .option-card.revealed.safe{border-color:rgba(113,242,184,.32);background:rgba(113,242,184,.10)}
+    .option-card.revealed.reward{border-color:rgba(119,198,255,.34);background:rgba(119,198,255,.10)}
+    .option-card.revealed.fail{border-color:rgba(255,111,127,.30);background:rgba(255,111,127,.08)}
+    .option-card .kind{
+      display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.08);font-size:10px;color:var(--text-dim);letter-spacing:1.4px;text-transform:uppercase
+    }
+    .option-card .icon{display:block;margin-top:14px;font-size:34px;animation:pulse 2.8s ease-in-out infinite}
+    .option-card .title{margin-top:10px;font-size:20px;font-weight:800;color:var(--text)}
+    .option-card .desc{margin-top:8px;font-size:13px;color:var(--text-dim);line-height:1.65}
+    .option-card .result{
+      margin-top:14px;font-size:12px;font-weight:700;letter-spacing:.2px;opacity:0;max-height:0;overflow:hidden;transition:max-height .2s,opacity .2s
+    }
+    .option-card.revealed .result{opacity:1;max-height:72px}
+    .option-card.revealed.safe .result{color:var(--safe)}
+    .option-card.revealed.reward .result{color:var(--stone)}
+    .option-card.revealed.fail .result{color:var(--danger)}
+
+    .status{
+      margin-top:18px;min-height:54px;padding:16px 18px;border-radius:20px;background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.07);font-size:13px;line-height:1.7;color:var(--text-dim)
+    }
+    .status.good{color:var(--safe);border-color:rgba(113,242,184,.18);background:rgba(113,242,184,.07)}
+    .status.bad{color:var(--danger);border-color:rgba(255,111,127,.18);background:rgba(255,111,127,.07)}
+    .status.win{color:var(--gold);border-color:rgba(255,213,106,.18);background:rgba(255,213,106,.07)}
+
+    .side{padding:22px}
+    .stack{display:flex;flex-direction:column;gap:18px}
+    .card{
+      position:relative;padding:18px;border-radius:24px;background:rgba(5,9,15,.35);border:1px solid rgba(255,255,255,.06)
+    }
+    .card h3{font-size:11px;color:var(--text-dim);letter-spacing:2.4px;text-transform:uppercase;margin-bottom:14px}
+    .bet-input-wrap{display:flex;align-items:center;gap:10px}
+    .bet-prefix{font-size:26px;font-weight:800;color:var(--gold);line-height:1}
+    .bet-input{
+      width:100%;padding:14px 16px;border-radius:16px;border:1px solid rgba(255,255,255,.08);outline:none;
+      background:rgba(255,255,255,.04);color:var(--text);font-size:22px;font-weight:800;font-variant-numeric:tabular-nums
+    }
+    .bet-input:focus{border-color:rgba(255,213,106,.45)}
+    .bet-input::-webkit-inner-spin-button,.bet-input::-webkit-outer-spin-button{-webkit-appearance:none}
+    .bet-input[type=number]{-moz-appearance:textfield}
+    .quick-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:14px}
+    .quick-btn,.minor-btn,.action-btn{
+      border:none;cursor:pointer;font-family:inherit;transition:transform .16s,filter .16s,opacity .16s
+    }
+    .quick-btn:hover,.minor-btn:hover,.action-btn:hover:not(:disabled){transform:translateY(-1px);filter:brightness(1.06)}
+    .quick-btn{
+      padding:10px 0;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+      color:var(--text);font-size:13px;font-weight:700
+    }
+    .minor-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}
+    .minor-btn{
+      padding:11px 0;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
+      color:var(--text-dim);font-size:12px;font-weight:700
+    }
+    .actions{display:grid;grid-template-columns:1fr;gap:10px}
+    .action-btn{padding:14px 18px;border-radius:18px;font-size:15px;font-weight:800;letter-spacing:.3px}
+    .action-btn:disabled{opacity:.42;cursor:not-allowed;transform:none!important;filter:none!important}
+    .action-btn.start{background:linear-gradient(135deg,#ffd56a,#ffad43);color:#130d00}
+    .action-btn.cash{background:linear-gradient(135deg,#49efaf,#18b77c);color:#03140d}
+    .action-btn.next{background:linear-gradient(135deg,#6dc8ff,#2f7da5);color:#04131d}
+    .action-btn.reset{background:rgba(255,255,255,.06);color:var(--text-dim);border:1px solid rgba(255,255,255,.08)}
+
+    .stats-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .stat-box{
+      padding:14px;border-radius:18px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)
+    }
+    .stat-box .k{font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:var(--text-dim)}
+    .stat-box .v{margin-top:5px;font-size:22px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}
+    .stat-box .v.safe{color:var(--safe)}
+    .stat-box .v.gold{color:var(--gold)}
+    .stat-box .v.stone{color:var(--stone)}
+
+    .log-list{display:flex;flex-direction:column;gap:10px;max-height:240px;overflow:auto;padding-right:4px}
+    .log-item{
+      display:flex;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.05)
+    }
+    .log-main{font-size:13px;font-weight:700;color:var(--text)}
+    .log-sub{font-size:11px;color:var(--text-dim);margin-top:2px}
+    .log-val{font-size:13px;font-weight:800}
+    .log-val.good{color:var(--safe)}
+    .log-val.bad{color:var(--danger)}
+    .log-val.win{color:var(--gold)}
+
+    .rules{list-style:none;display:flex;flex-direction:column;gap:10px}
+    .rules li{padding-left:18px;position:relative;font-size:13px;line-height:1.65;color:var(--text-dim)}
+    .rules li::before{
+      content:'';position:absolute;left:0;top:9px;width:8px;height:8px;border-radius:50%;
+      background:linear-gradient(135deg,var(--gold),var(--stone))
+    }
+
+    .nick-overlay{
+      position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:18px;
+      background:rgba(0,0,0,.72);backdrop-filter:blur(8px);opacity:0;pointer-events:none;transition:opacity .25s
+    }
+    .nick-overlay.open{opacity:1;pointer-events:auto}
+    .nick-box{
+      width:min(420px,100%);padding:32px 28px 26px;border-radius:28px;background:linear-gradient(180deg,#131b28,#0c111b);
+      border:1px solid rgba(255,255,255,.08);box-shadow:0 24px 80px rgba(0,0,0,.45);transform:scale(.92);transition:transform .25s
+    }
+    .nick-overlay.open .nick-box{transform:scale(1)}
+    .nick-icon{display:block;text-align:center;font-size:52px;animation:pulse 2.8s ease-in-out infinite}
+    .nick-title{
+      margin-top:10px;text-align:center;font-family:'Playfair Display',serif;font-size:28px;font-weight:900;letter-spacing:2px;color:var(--gold)
+    }
+    .nick-sub{margin-top:8px;text-align:center;font-size:13px;line-height:1.6;color:var(--text-dim)}
+    .nick-input{
+      width:100%;margin-top:18px;padding:14px 16px;border-radius:16px;background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.08);color:var(--text);font-size:18px;text-align:center;outline:none
+    }
+    .nick-input:focus{border-color:rgba(255,213,106,.42)}
+    .nick-btn{
+      width:100%;margin-top:14px;padding:14px 18px;border:none;border-radius:16px;cursor:pointer;
+      background:linear-gradient(135deg,#ffd56a,#ffad43);color:#120e00;font-size:15px;font-weight:800
+    }
+    .nick-err{min-height:22px;margin-top:10px;text-align:center;font-size:13px;color:var(--danger)}
+
+    @media (max-width:1020px){
+      .layout{grid-template-columns:1fr}
+    }
+    @media (max-width:780px){
+      .wrap{padding-inline:14px}
+      .expedition,.side{padding:18px}
+      .option-grid,.quick-row,.minor-row,.stats-grid{grid-template-columns:1fr 1fr}
+      .route-track{grid-template-columns:repeat(5,minmax(0,1fr))}
+    }
+    @media (max-width:560px){
+      .hdr{padding:12px 14px}
+      .hero-copy h1{letter-spacing:3px}
+      .option-grid,.quick-row,.minor-row,.stats-grid{grid-template-columns:1fr}
+      .route-track{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+  </style>
+</head>
+<body>
+  <div id="stars"></div>
+
+  <div class="nick-overlay" id="nickOverlay">
+    <div class="nick-box">
+      <span class="nick-icon">🕯️</span>
+      <div class="nick-title">留下探險者代號</div>
+      <div class="nick-sub">先設定暱稱，這樣你的籌碼才能在賭場裡持續累積。</div>
+      <input class="nick-input" id="nickInput" type="text" placeholder="輸入你的暱稱" maxlength="16" autocomplete="off">
+      <button class="nick-btn" id="nickSubmit">進入洞穴</button>
+      <div class="nick-err" id="nickErr"></div>
+    </div>
+  </div>
+
+  <header class="hdr">
+    <a href="../casino/" class="back-btn">← 返回賭場大廳</a>
+    <div class="hdr-title">⛰️ CAVE EXPEDITION ⛰️</div>
+    <div class="bal-block" id="balBlock" title="點擊更換暱稱">
+      <span class="bal-nick" id="balNick"></span>
+      <span class="bal-lbl">籌碼</span>
+      <span class="bal-amt" id="bal">$1,000</span>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <div class="hero-copy">
+        <h1>洞穴探險</h1>
+        <p>每過一層就翻倍一次，選錯一條路就整局歸零。<br>見好就收，或把命押到第十層。</p>
+      </div>
+      <div class="hero-pills">
+        <span class="hero-pill">10 層洞窟</span>
+        <span class="hero-pill">2 至 4 個選項</span>
+        <span class="hero-pill">成功即倍增</span>
+        <span class="hero-pill">可隨時跑路</span>
+      </div>
+    </section>
+
+    <section class="layout">
+      <div class="panel">
+        <div class="expedition">
+          <div class="expedition-top">
+            <div class="phase" id="phasePill">
+              <span class="phase-dot"></span>
+              <span id="phaseText">等待下注</span>
+            </div>
+            <div class="depth-note" id="depthNote">下注後開始第 1 層探勘。</div>
+          </div>
+
+          <div class="cave-stage">
+            <div class="payout-label">目前可帶走收益</div>
+            <div class="payout-value" id="payoutValue">$0</div>
+            <div class="multiplier-line" id="multiplierLine">本局倍率 x0</div>
+            <div class="subline" id="subLine">先選定賭注，進洞後每過一層都會翻倍。</div>
+
+            <div class="route-track" id="routeTrack"></div>
+          </div>
+
+          <div class="section-head">
+            <h2>本輪洞口</h2>
+            <span id="roundLabel">第 0 / 10 層</span>
+          </div>
+          <div class="option-grid" id="optionGrid"></div>
+
+          <div class="status" id="statusBox">準備好了就下注開始。每一輪只會有一個安全結果，其餘大多是陷阱。</div>
+        </div>
+      </div>
+
+      <aside class="panel">
+        <div class="side">
+          <div class="stack">
+            <section class="card">
+              <h3>下注設定</h3>
+              <div class="bet-input-wrap">
+                <span class="bet-prefix">$</span>
+                <input id="betInput" class="bet-input" type="number" min="10" step="10" value="100">
+              </div>
+              <div class="quick-row">
+                <button class="quick-btn" data-bet="50">$50</button>
+                <button class="quick-btn" data-bet="100">$100</button>
+                <button class="quick-btn" data-bet="250">$250</button>
+                <button class="quick-btn" data-bet="500">$500</button>
+              </div>
+              <div class="minor-row">
+                <button class="minor-btn" id="halfBtn">一半</button>
+                <button class="minor-btn" id="doubleBtn">加倍</button>
+                <button class="minor-btn" id="maxBtn">全押</button>
+              </div>
+            </section>
+
+            <section class="card">
+              <h3>行動</h3>
+              <div class="actions">
+                <button class="action-btn start" id="startBtn">開始探險</button>
+                <button class="action-btn cash" id="cashBtn" disabled>拿了就跑</button>
+                <button class="action-btn next" id="nextBtn" disabled>繼續深入</button>
+                <button class="action-btn reset" id="resetBtn" disabled>重置本局</button>
+              </div>
+            </section>
+
+            <section class="card">
+              <h3>探險數據</h3>
+              <div class="stats-grid">
+                <div class="stat-box">
+                  <div class="k">目前層數</div>
+                  <div class="v gold" id="depthStat">0 / 10</div>
+                </div>
+                <div class="stat-box">
+                  <div class="k">安全次數</div>
+                  <div class="v safe" id="safeStat">0</div>
+                </div>
+                <div class="stat-box">
+                  <div class="k">本局倍率</div>
+                  <div class="v stone" id="multiStat">x0</div>
+                </div>
+                <div class="stat-box">
+                  <div class="k">寶物加成</div>
+                  <div class="v" id="bonusStat">$0</div>
+                </div>
+              </div>
+            </section>
+
+            <section class="card">
+              <h3>探險紀錄</h3>
+              <div class="log-list" id="logList"></div>
+            </section>
+
+            <section class="card">
+              <h3>玩法規則</h3>
+              <ul class="rules">
+                <li>先下注，籌碼會立刻扣除並進入洞穴。</li>
+                <li>每層隨機出現 2 到 4 個選項，只有一個安全結果。</li>
+                <li>安全通過一層，當前收益直接翻倍；有時還會撿到額外寶物。</li>
+                <li>每次成功後都能選擇帶著收益撤離，或賭下一層。</li>
+                <li>撐過第 10 層會自動完成探險並領走全部收益。</li>
+              </ul>
+            </section>
+          </div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script src="../player.js"></script>
+  <script>
+    const TOTAL_ROUNDS = 10;
+    const OPTION_COUNT_POOL = [2,3,3,4,4,4];
+    const SAFE_ROOMS = [
+      { icon:'🪨', title:'碎石暗門', desc:'風聲很輕，像是有空氣從深處流動。' },
+      { icon:'🕯️', title:'火把裂縫', desc:'牆上殘留舊火把灰燼，像前人留下的路。' },
+      { icon:'🌊', title:'地下泉道', desc:'聽得到水流，代表前方還有空間可以通行。' },
+      { icon:'🪜', title:'斷橋斜坡', desc:'危險但能踩，選對角度就能滑到更深處。' },
+      { icon:'🦴', title:'白骨岔廊', desc:'可怕歸可怕，但骨堆並沒有新鮮崩落痕跡。' }
+    ];
+    const REWARD_ROOMS = [
+      { icon:'💎', title:'晶簇密室', desc:'牆面泛著藍光，通常藏著高價礦脈。', tag:'寶物' },
+      { icon:'🪙', title:'古幣祭壇', desc:'中央石臺積著遺落的金屬光澤。', tag:'寶物' },
+      { icon:'📦', title:'遺跡補給箱', desc:'看起來有人逃得太急，連箱子都沒帶走。', tag:'寶物' },
+      { icon:'👑', title:'王冠藏庫', desc:'這種房間少見，但只要活著出來就賺翻。', tag:'寶物' }
+    ];
+    const FAIL_ROOMS = [
+      { icon:'☠️', title:'毒霧陷坑', desc:'地面鬆軟得不自然，踩下去多半直接消失。', result:'毒霧爆開，整隊埋進坑裡。' },
+      { icon:'🕸️', title:'蛛網死角', desc:'安靜得太刻意，像是東西在等你靠近。', result:'腳下一沉，整片地網瞬間封死退路。' },
+      { icon:'🧨', title:'崩塌石門', desc:'裂痕太新，像是再碰一下就會全掉下來。', result:'石門整片崩落，收益和退路一起被埋住。' },
+      { icon:'🔥', title:'熔岩細縫', desc:'熱浪從縫裡往外吐，裡面不像能久留。', result:'火舌竄上來，本局收益直接蒸發。' },
+      { icon:'👹', title:'怪影巢穴', desc:'牆上抓痕密密麻麻，看著就不像好消息。', result:'你驚動了巢穴，本局當場結束。' },
+      { icon:'⚡', title:'符文誤門', desc:'看似珍貴的石碑，其實像個警報器。', result:'古老機關啟動，整條路線瞬間封鎖。' }
+    ];
+
+    const el = {
+      bal: document.getElementById('bal'),
+      balNick: document.getElementById('balNick'),
+      betInput: document.getElementById('betInput'),
+      startBtn: document.getElementById('startBtn'),
+      cashBtn: document.getElementById('cashBtn'),
+      nextBtn: document.getElementById('nextBtn'),
+      resetBtn: document.getElementById('resetBtn'),
+      optionGrid: document.getElementById('optionGrid'),
+      statusBox: document.getElementById('statusBox'),
+      payoutValue: document.getElementById('payoutValue'),
+      multiplierLine: document.getElementById('multiplierLine'),
+      subLine: document.getElementById('subLine'),
+      routeTrack: document.getElementById('routeTrack'),
+      roundLabel: document.getElementById('roundLabel'),
+      depthStat: document.getElementById('depthStat'),
+      safeStat: document.getElementById('safeStat'),
+      multiStat: document.getElementById('multiStat'),
+      bonusStat: document.getElementById('bonusStat'),
+      phasePill: document.getElementById('phasePill'),
+      phaseText: document.getElementById('phaseText'),
+      depthNote: document.getElementById('depthNote'),
+      logList: document.getElementById('logList'),
+      nickOverlay: document.getElementById('nickOverlay'),
+      nickInput: document.getElementById('nickInput'),
+      nickSubmit: document.getElementById('nickSubmit'),
+      nickErr: document.getElementById('nickErr'),
+      balBlock: document.getElementById('balBlock')
+    };
+
+    const state = {
+      balance: MC.loadBalance(),
+      sessionHigh: 0,
+      runActive: false,
+      awaitingChoice: false,
+      betweenRounds: false,
+      round: 0,
+      bet: 0,
+      payout: 0,
+      bonus: 0,
+      options: [],
+      selectedIndex: null,
+      history: []
+    };
+
+    const stars = document.getElementById('stars');
+    for(let i=0;i<75;i++){
+      const s=document.createElement('div');
+      s.className='star';
+      const size=Math.random()*2+.6;
+      s.style.cssText=`width:${size}px;height:${size}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2.5+Math.random()*4}s;--o:${.12+Math.random()*.48};animation-delay:${Math.random()*4}s`;
+      stars.appendChild(s);
+    }
+
+    function fmt(n){ return '$' + Math.round(n).toLocaleString('en-US'); }
+    function shuffle(arr){
+      const out=[...arr];
+      for(let i=out.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));
+        [out[i],out[j]]=[out[j],out[i]];
+      }
+      return out;
+    }
+    function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+    function clampBet(v){
+      const n=Math.max(10,Math.floor((Number(v)||0)/10)*10);
+      return Number.isFinite(n)?n:10;
+    }
+    function successCount(){ return Math.max(0,state.round-1); }
+    function currentMultiplier(){ return state.bet ? state.payout / state.bet : 0; }
+
+    function renderBalance(tone){
+      const nick=MC.getNickname();
+      el.balNick.textContent = nick ? '探險者 ' + nick : '';
+      el.bal.textContent = fmt(state.balance);
+      el.bal.classList.remove('up','down');
+      if(tone){
+        void el.bal.offsetWidth;
+        el.bal.classList.add(tone);
+      }
+    }
+
+    function setPhase(mode,text,note){
+      el.phasePill.className='phase' + (mode ? ' ' + mode : '');
+      el.phaseText.textContent=text;
+      el.depthNote.textContent=note;
+    }
+
+    function setStatus(text,mode){
+      el.statusBox.className='status' + (mode ? ' ' + mode : '');
+      el.statusBox.textContent=text;
+    }
+
+    function pushLog(title,sub,value,tone){
+      state.history.unshift({title,sub,value,tone});
+      state.history=state.history.slice(0,8);
+      renderLog();
+    }
+
+    function renderLog(){
+      if(!state.history.length){
+        el.logList.innerHTML='<div class="log-item"><div><div class="log-main">尚未出發</div><div class="log-sub">等你第一趟探險紀錄。</div></div><div class="log-val">-</div></div>';
+        return;
+      }
+      el.logList.innerHTML=state.history.map(item=>`
+        <div class="log-item">
+          <div>
+            <div class="log-main">${item.title}</div>
+            <div class="log-sub">${item.sub}</div>
+          </div>
+          <div class="log-val ${item.tone||''}">${item.value}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderRoute(){
+      const done=successCount();
+      el.routeTrack.innerHTML='';
+      for(let i=1;i<=TOTAL_ROUNDS;i++){
+        const div=document.createElement('div');
+        div.className='route-node';
+        if(state.runActive){
+          if(i<=done) div.classList.add('done');
+          else if(i===state.round) div.classList.add('current');
+        }
+        if(!state.runActive && state.selectedIndex!==null && i===state.round && successCount()<state.round){
+          div.classList.add('dead');
+        }
+        div.textContent='L' + i;
+        el.routeTrack.appendChild(div);
+      }
+    }
+
+    function renderStats(){
+      el.roundLabel.textContent=`第 ${state.runActive ? state.round : 0} / ${TOTAL_ROUNDS} 層`;
+      el.depthStat.textContent=`${state.runActive ? state.round : 0} / ${TOTAL_ROUNDS}`;
+      el.safeStat.textContent=String(successCount());
+      el.multiStat.textContent='x' + (state.bet ? currentMultiplier().toFixed(2).replace(/\.00$/,'') : '0');
+      el.bonusStat.textContent=fmt(state.bonus);
+      el.payoutValue.textContent=fmt(state.payout);
+      el.multiplierLine.textContent='本局倍率 x' + (state.bet ? currentMultiplier().toFixed(2).replace(/\.00$/,'') : '0');
+      el.subLine.textContent = state.runActive
+        ? `本金 ${fmt(state.bet)}，目前已成功穿過 ${successCount()} 層。`
+        : '先選定賭注，進洞後每過一層都會翻倍。';
+      renderRoute();
+    }
+
+    function renderOptions(){
+      el.optionGrid.innerHTML='';
+      if(!state.options.length){
+        el.optionGrid.innerHTML='<div class="option-card" style="grid-column:1/-1;cursor:default"><span class="kind">準備中</span><span class="icon">🪖</span><div class="title">等待你進洞</div><div class="desc">開始探險後，系統會隨機生成本輪 2 到 4 個路口。</div><div class="result" style="opacity:1;max-height:72px;color:var(--text-dim)">這是一款高風險倍增局，十層全過才算完美收官。</div></div>';
+        return;
+      }
+      state.options.forEach((option,index)=>{
+        const btn=document.createElement('button');
+        btn.type='button';
+        btn.className='option-card';
+        if(state.selectedIndex===index) btn.classList.add('selected');
+        if(option.revealed) btn.classList.add('revealed', option.type);
+        btn.disabled=!state.awaitingChoice;
+        btn.innerHTML=`
+          <span class="kind">${option.badge}</span>
+          <span class="icon">${option.icon}</span>
+          <div class="title">${option.title}</div>
+          <div class="desc">${option.desc}</div>
+          <div class="result">${option.resultText || ''}</div>
+        `;
+        btn.addEventListener('click',()=>chooseOption(index));
+        el.optionGrid.appendChild(btn);
+      });
+    }
+
+    function syncControls(){
+      const active=state.runActive;
+      el.startBtn.disabled=active;
+      el.cashBtn.disabled=!(state.betweenRounds && state.payout>0);
+      el.nextBtn.disabled=!state.betweenRounds;
+      el.resetBtn.disabled=!active;
+      el.betInput.disabled=active;
+      document.querySelectorAll('[data-bet],#halfBtn,#doubleBtn,#maxBtn').forEach(btn=>btn.disabled=active);
+    }
+
+    function buildRoundOptions(){
+      const count = pick(OPTION_COUNT_POOL);
+      const safeIndex = Math.floor(Math.random()*count);
+      const rewardIndex = Math.random() < Math.min(0.46, 0.14 + state.round * 0.03) ? safeIndex : -1;
+      const failPool = shuffle(FAIL_ROOMS).slice(0,count-1);
+      const options=[];
+      let failCursor=0;
+      for(let i=0;i<count;i++){
+        if(i===safeIndex){
+          if(i===rewardIndex){
+            const room=pick(REWARD_ROOMS);
+            const bonus=Math.round(state.bet * (0.35 + state.round * 0.08 + Math.random()*0.2));
+            options.push({
+              type:'reward',
+              badge:'安全路線 + 寶物',
+              icon:room.icon,
+              title:room.title,
+              desc:room.desc,
+              bonus,
+              resultText:`你帶回額外寶物 ${fmt(bonus)}，本輪收益翻倍後再加上這筆。`
+            });
+          }else{
+            const room=pick(SAFE_ROOMS);
+            options.push({
+              type:'safe',
+              badge:'安全路線',
+              icon:room.icon,
+              title:room.title,
+              desc:room.desc,
+              bonus:0,
+              resultText:'你選對路了，收益立刻翻倍，可以撤離也可以繼續賭下一層。'
+            });
+          }
+        }else{
+          const room=failPool[failCursor++];
+          options.push({
+            type:'fail',
+            badge:'未知風險',
+            icon:room.icon,
+            title:room.title,
+            desc:room.desc,
+            bonus:0,
+            resultText:room.result
+          });
+        }
+      }
+      state.options=shuffle(options);
+      state.selectedIndex=null;
+      renderOptions();
+    }
+
+    function startRun(){
+      const bet=clampBet(el.betInput.value);
+      if(!MC.getNickname()){
+        openNickModal();
+        return;
+      }
+      if(bet<10){
+        setStatus('最低下注為 $10。','bad');
+        return;
+      }
+      if(bet>state.balance){
+        setStatus('籌碼不足，這筆下注撐不到進洞。','bad');
+        return;
+      }
+      state.balance-=bet;
+      MC.saveBalance(state.balance);
+      renderBalance('down');
+
+      state.runActive=true;
+      state.awaitingChoice=true;
+      state.betweenRounds=false;
+      state.round=1;
+      state.bet=bet;
+      state.payout=bet;
+      state.bonus=0;
+      state.options=[];
+      state.selectedIndex=null;
+
+      buildRoundOptions();
+      renderStats();
+      syncControls();
+      setPhase('live','第 1 層探勘中','從 2 到 4 個洞口裡挑一個，只有一條能活著深入。');
+      setStatus(`你帶著 ${fmt(bet)} 進洞。選對第 1 層的路，收益就會立刻翻倍。`, '');
+      pushLog('探險開始', `下注 ${fmt(bet)}，準備進入第 1 層。`, fmt(bet), '');
+    }
+
+    function revealAll(){
+      state.options.forEach(option=>{ option.revealed=true; });
+      renderOptions();
+    }
+
+    function finishRun(kind,message,tone){
+      state.runActive=false;
+      state.awaitingChoice=false;
+      state.betweenRounds=false;
+      state.options=[];
+      state.selectedIndex=null;
+      state.bet=0;
+      state.payout=0;
+      state.bonus=0;
+      state.round=0;
+      setPhase(kind==='win' ? 'win' : kind==='fail' ? 'fail' : '', kind==='win' ? '探險結束' : '本局結束', message);
+      renderStats();
+      renderOptions();
+      syncControls();
+      setStatus(message,tone);
+    }
+
+    function chooseOption(index){
+      if(!state.awaitingChoice) return;
+      const option=state.options[index];
+      state.awaitingChoice=false;
+      state.selectedIndex=index;
+      revealAll();
+
+      if(option.type==='fail'){
+        const loseValue=state.payout;
+        pushLog(`第 ${state.round} 層失手`, option.title + ' 把你直接送回入口外。', fmt(loseValue), 'bad');
+        finishRun('fail', `${option.resultText} 你失去了本局可帶走的 ${fmt(loseValue)}。`, 'bad');
+        return;
+      }
+
+      state.payout = state.payout * 2 + option.bonus;
+      state.bonus += option.bonus;
+      state.betweenRounds = true;
+      renderStats();
+
+      if(state.round >= TOTAL_ROUNDS){
+        state.balance += state.payout;
+        MC.saveBalance(state.balance);
+        renderBalance('up');
+        state.sessionHigh = Math.max(state.sessionHigh, state.payout);
+        pushLog('十層突破', `你撐過全部 ${TOTAL_ROUNDS} 層，探險自動結算。`, fmt(state.payout), 'win');
+        finishRun('win', `恭喜生還。你成功穿越 10 層洞窟，抱走 ${fmt(state.payout)}。`, 'win');
+        return;
+      }
+
+      const extra = option.bonus ? `，還撿到 ${fmt(option.bonus)} 的寶物` : '';
+      setPhase('live',`第 ${state.round} 層通過`,`你已安全通過 ${state.round} 層，現在可以跑路或繼續賭第 ${state.round+1} 層。`);
+      setStatus(`你通過了第 ${state.round} 層${extra}。目前可帶走 ${fmt(state.payout)}。`, 'good');
+      pushLog(`第 ${state.round} 層成功`, option.title + (option.bonus ? `，額外帶走 ${fmt(option.bonus)}。` : '，收益直接翻倍。'), fmt(state.payout), 'good');
+      syncControls();
+    }
+
+    function continueRun(){
+      if(!state.betweenRounds) return;
+      state.round += 1;
+      state.awaitingChoice=true;
+      state.betweenRounds=false;
+      buildRoundOptions();
+      renderStats();
+      syncControls();
+      setPhase('live',`第 ${state.round} 層探勘中`,`這一層有 ${state.options.length} 個選項，多數都是死路。`);
+      setStatus(`深入第 ${state.round} 層。保持手感，下一次成功後收益還會再翻倍。`, '');
+    }
+
+    function cashOut(){
+      if(!state.betweenRounds || state.payout<=0) return;
+      const take=state.payout;
+      const depth=state.round;
+      state.balance += take;
+      MC.saveBalance(state.balance);
+      renderBalance('up');
+      state.sessionHigh = Math.max(state.sessionHigh, take);
+      pushLog('成功撤離', `你在第 ${depth} 層後見好就收。`, fmt(take), 'good');
+      finishRun('', `你帶著 ${fmt(take)} 成功撤離，在第 ${depth} 層後保住了全部收益。`, 'good');
+    }
+
+    function resetRun(){
+      if(!state.runActive) return;
+      state.balance += state.bet;
+      MC.saveBalance(state.balance);
+      renderBalance('up');
+      pushLog('手動重置', '這趟探險在正式結算前被取消，已退回原始下注。', fmt(state.bet), '');
+      finishRun('', '本局已重置，原始下注已退回。你可以重新調整金額再出發。', '');
+    }
+
+    function openNickModal(){
+      el.nickErr.textContent='';
+      el.nickInput.value=MC.getNickname();
+      el.nickOverlay.classList.add('open');
+      setTimeout(()=>el.nickInput.focus(),250);
+    }
+    function closeNickModal(){ el.nickOverlay.classList.remove('open'); }
+    function submitNick(){
+      const value=el.nickInput.value.trim();
+      if(!value){ el.nickErr.textContent='請先輸入暱稱。'; return; }
+      if(value.length<2){ el.nickErr.textContent='暱稱至少要 2 個字。'; return; }
+      MC.setNickname(value);
+      state.balance=MC.loadBalance();
+      renderBalance();
+      closeNickModal();
+    }
+
+    document.querySelectorAll('[data-bet]').forEach(btn=>{
+      btn.addEventListener('click',()=>{ el.betInput.value=btn.dataset.bet; });
+    });
+    document.getElementById('halfBtn').addEventListener('click',()=>{
+      el.betInput.value=Math.max(10,Math.floor(state.balance/2/10)*10);
+    });
+    document.getElementById('doubleBtn').addEventListener('click',()=>{
+      el.betInput.value=clampBet((Number(el.betInput.value)||0)*2);
+    });
+    document.getElementById('maxBtn').addEventListener('click',()=>{
+      el.betInput.value=Math.max(10,Math.floor(state.balance/10)*10);
+    });
+
+    el.startBtn.addEventListener('click',startRun);
+    el.cashBtn.addEventListener('click',cashOut);
+    el.nextBtn.addEventListener('click',continueRun);
+    el.resetBtn.addEventListener('click',resetRun);
+    el.nickSubmit.addEventListener('click',submitNick);
+    el.nickInput.addEventListener('keydown',e=>{ if(e.key==='Enter') submitNick(); });
+    el.balBlock.addEventListener('click',openNickModal);
+
+    if(!MC.getNickname()) openNickModal();
+    renderBalance();
+    renderStats();
+    renderOptions();
+    renderLog();
+    syncControls();
+  </script>
+</body>
+</html>

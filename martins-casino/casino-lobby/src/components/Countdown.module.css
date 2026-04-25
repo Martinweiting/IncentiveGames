@@ -1,0 +1,21 @@
+.countdown {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.label {
+  font-size: 0.72rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: rgba(246, 241, 230, 0.58);
+}
+
+.value {
+  font-family: 'Oswald', 'DM Sans', sans-serif;
+  font-size: clamp(1.5rem, 2vw, 1.85rem);
+  line-height: 1;
+  letter-spacing: 0.08em;
+  color: #f4d379;
+  font-variant-numeric: tabular-nums;
+}
